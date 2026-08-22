@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="GNOmE: a model's computation is a graph. Extract it from blockwise Jacobians, measure explicability as graph statistics, and read it with graph networks — recall 1.00 in 9/9 recovered circuits, few-shot depth reading 0.91 vs 0.72 baseline, transfer to unseen input sizes 0.96.">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><strong>The Computation is a Graph</strong>: GNOmE — extraction, measurement, and readout of mechanistic explicability</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/computer-modern/cmu-serif.css">
+
+  <script>
+    MathJax = { tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] } };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+  <style>
+    :root {
+      --ink: #1a1a1a; --muted: #555; --faint: #8c8e90; --panel: #f8f8f8;
+      --border: #c4c6c8; --link: #226999; --good: #1e6b3a; --bad: #b03a2e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { background: #fff; }
+    body { font-family: 'CMU Serif', Georgia, serif; font-weight: 500;
+      color: var(--ink); -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility; }
+    a { color: var(--link); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { max-width: 920px; margin: 0 auto; padding: 0 20px; }
+    .has-text-centered { text-align: center; }
+    .has-text-justified { text-align: justify; }
+
+    .hero { padding: 4.2rem 0 1.6rem; }
+    .publication-title { font-family: 'CMU Serif', Georgia, serif;
+      font-weight: 700 !important; line-height: 1.12; letter-spacing: 0;
+      font-size: 2.3rem; text-wrap: balance; }
+    .publication-title strong { font-weight: 900 !important; }
+    .publication-sub { margin-top: 1.1rem; font-family: 'Inter', sans-serif;
+      font-size: 1.05rem; color: var(--muted); line-height: 1.5;
+      max-width: 60rem; margin-left: auto; margin-right: auto; }
+    .tagline { margin-top: 0.9rem; font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.92rem; color: var(--ink); letter-spacing: 0.01em; }
+    .authors { margin-top: 1.2rem; font-family: 'Inter', sans-serif;
+      font-size: 0.95rem; color: var(--ink); }
+    .affiliation { margin-top: 0.15rem; font-family: 'Inter', sans-serif;
+      font-size: 0.82rem; color: var(--faint); }
+    .links { margin-top: 1.5rem; font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.88rem; display: flex; flex-wrap: wrap; gap: 0.6rem 1.4rem;
+      justify-content: center; }
+
+    .section { padding: 2.4rem 0 1.2rem; }
+    .title { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.01em;
+      margin-bottom: 1rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--border); }
+    .section p { line-height: 1.6; color: var(--ink); margin-bottom: 0.9rem; }
+    .muted { color: var(--muted); }
+
+    .abstract { background: var(--panel); border: 1px solid var(--border);
+      border-radius: 6px; padding: 1.4rem 1.6rem; font-size: 0.99rem;
+      line-height: 1.62; text-align: justify; }
+
+    .impact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.2rem; margin-top: 1.1rem; }
+    .impact { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+    .impact-img { width: 100%; display: block; border-bottom: 1px solid var(--border); }
+    .impact-body { padding: 0.9rem 1.1rem 1.05rem; }
+    .impact-num { font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+      font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase;
+      color: var(--ink); margin-bottom: 0.35rem; }
+    .impact-body p { font-size: 0.88rem; line-height: 1.5; color: var(--muted); margin: 0; }
+
+    table { width: 100%; border-collapse: collapse; font-family: 'Inter', sans-serif;
+      font-size: 0.83rem; margin: 1rem 0 1.4rem; background: var(--panel);
+      border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+    th, td { padding: 0.5rem 0.65rem; text-align: right; border-bottom: 1px solid var(--border); }
+    th:first-child, td:first-child { text-align: left; }
+    thead th { font-weight: 600; font-size: 0.78rem; letter-spacing: 0.02em;
+      text-transform: uppercase; color: var(--muted); background: #fff; }
+    tbody tr:last-child td { border-bottom: none; }
+    td.win { color: var(--good); font-weight: 700; }
+    td.bad { color: var(--bad); font-weight: 600; }
+    .table-note { font-family: 'IBM Plex Mono', monospace; font-size: 0.76rem;
+      color: var(--faint); margin-top: -1rem; margin-bottom: 1.2rem; }
+    .tablescroll { overflow-x: auto; }
+
+    pre { background: var(--panel); border: 1px solid var(--border); border-radius: 6px;
+      padding: 1.1rem 1.3rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+      line-height: 1.55; overflow-x: auto; margin: 1rem 0; }
+
+    /* interactive demos */
+    .demo-box { background: var(--panel); border: 1px solid var(--border);
+      border-radius: 6px; padding: 1rem; margin: 1rem 0; }
+    .demo-box .demo-head { font-family: 'IBM Plex Mono', monospace; font-size: 0.76rem;
+      color: var(--muted); display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 0.7rem; gap: 1rem; flex-wrap: wrap; }
+    .demo-box canvas { width: 100%; background: #fff; border: 1px solid var(--border);
+      display: block; border-radius: 4px; }
+    .demo-controls { margin-top: 0.7rem; display: flex; gap: 0.7rem; align-items: center;
+      flex-wrap: wrap; font-family: 'IBM Plex Mono', monospace; font-size: 0.76rem; }
+    .demo-controls button { font-family: 'IBM Plex Mono', monospace; font-size: 0.76rem;
+      background: #fff; border: 1px solid var(--border); border-radius: 4px;
+      padding: 0.35rem 0.8rem; cursor: pointer; color: var(--ink); }
+    .demo-controls button:hover { border-color: var(--link); color: var(--link); }
+    .demo-controls label { display: flex; align-items: center; gap: 0.35rem; color: var(--muted); }
+    .demo-controls input[type=range] { width: 140px; accent-color: var(--link); }
+    .demo-status { font-family: 'IBM Plex Mono', monospace; font-size: 0.76rem;
+      color: var(--good); margin-top: 0.6rem; min-height: 1.1em; }
+
+    footer { margin-top: 3rem; padding: 1.6rem 0 2.6rem; border-top: 1px solid var(--border);
+      font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; color: var(--faint);
+      text-align: center; }
+    @media (max-width: 600px) { .publication-title { font-size: 1.8rem; }
+      th, td { padding: 0.4rem 0.4rem; font-size: 0.74rem; } }
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="container has-text-centered">
+    <h1 class="publication-title">The Computation is a <strong>Graph</strong>:<br>GNOmE — Extraction, Measurement, and Readout of Mechanistic Explicability</h1>
+    <div class="tagline">a model's computation is a graph — we extract it from real derivatives, measure it, and teach graph networks to read it</div>
+    <div class="authors">Sehaj Randhir Singh</div>
+    <div class="affiliation">Independent researcher; partial affiliation with NYU Tandon School of Engineering</div>
+    <div class="links">
+      <a href="manuscript.pdf">Paper (NMI format)</a><a href="ieee_paper.pdf">Paper (IEEE format)</a><a href="https://github.com/sehajr-singhs/gnome">GitHub (code + data)</a>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+<section class="section"><div class="abstract"><p>Mechanistic interpretability asks what a trained network <em>computes</em>, but most readouts answer with proxies — attention weights, saliency maps, activation patches — one step removed from the computation itself. GNOmE makes the obvious move: <strong>a model's computation is a graph</strong>, and the weights already determine it. <strong>Extract.</strong> From a trained MLP or transformer, build the <em>circuit graph</em> — one node per unit, edges weighted by the blockwise mean-absolute Jacobian 𝔼<sub>x</sub>|∂u<sub>k+1</sub>/∂u<sub>k</sub>|, thresholded into a layered DAG. Every edge is a real derivative, not a heuristic. Extraction costs ≈1.4% of training time. <strong>Measure.</strong> Score the graph with ground-truth-free explicability metrics (sparsity, modularity, effective depth, bottleneck, role diversity) and a composite Mechanistic Explicability Score; where the true circuit is known by construction, compute <em>circuit recovery</em>: trained boolean models recover their target circuits' input-pair wiring with <strong>recall 1.00 in 9/9 models</strong> (F1 0.50–0.90), and architectures separate cleanly — MLP sparsity 0.71 vs transformer 0.43, role diversity 2.3×. <strong>Read.</strong> A graph network infers unit depth-roles from structure alone — no positional features — at <strong>0.91–0.96 macro-F1 vs 0.72–0.76 for a feature-only baseline</strong>, and the reading <strong>transfers to input sizes never seen during training</strong>. And the framework's testability pays off at the boundary: the reading is architecture-specific (chance across architectures for every readout), and semantic recovery is not readable from structure by any method. Mechanistic explicability is a graph problem; GNOmE makes it measurable and learnable.</p></div></section>
+
+<section class="section"><h2 class="title">The one idea</h2><p>Every mechanistic-interpretability question is a question about a computation graph: which inputs does this unit depend on, how deep is the wiring, where are the bottlenecks, what roles do units play. GNOmE's claim is that once you have the graph — <strong>extracted from derivatives, not heuristics</strong> — both <em>measurement</em> (metrics) and <em>reading</em> (graph networks) become possible, and both are testable against ground-truth circuits that are known by construction.</p><pre>W_k[i, j] = E_x | ∂u_{k+1}[i] / ∂u_k[j] |    — blockwise mean-abs Jacobian
+edges kept iff  W_k[i, j] ≥ rel_thresh × mean(W_k > 0)   — per-layer relative threshold</pre><div class="impact-grid"><div class="impact"><img class="impact-img" src="figs/fig1_pipeline.png" alt=""><div class="impact-body"><div class="impact-num">extract → measure → read</div><p>a trained model is differentiated blockwise, thresholded into a circuit DAG, scored, and read by graph networks.</p></div></div><div class="impact"><img class="impact-img" src="figs/fig2_recovery.png" alt=""><div class="impact-body"><div class="impact-num">recall 1.00 in 9/9</div><p>every trained boolean model's circuit graph contains its target circuit's full input-pair wiring; F1 is bounded only by redundant wiring.</p></div></div><div class="impact"><img class="impact-img" src="figs/fig3_density.png" alt=""><div class="impact-body"><div class="impact-num">0.71 vs 0.43 sparsity</div><p>on the same modular-arithmetic task, MLPs wire sparser circuit graphs than transformers — an architectural density signature.</p></div></div></div></section>
+
+<section class="section"><h2 class="title">Play with the extraction</h2><p class="muted">The pipeline in miniature: a layered computation graph with Jacobian-weighted edges. Drag the threshold — below it, edges are not computational paths. The density readout is sparsity, one of the explicability metrics.</p>
+
+<div class="demo-box">
+  <div class="demo-head">
+    <span>DEMO — thresholding turns a weight matrix into a circuit graph</span>
+    <span>edge strength ∝ |∂u_{k+1}/∂u_k| · nodes colored by depth bin</span>
+  </div>
+  <canvas id="cv-extract" width="1040" height="380"></canvas>
+  <div class="demo-controls">
+    <label>rel_thresh <input type="range" id="rng-thresh" min="5" max="100" value="50"></label>
+    <label><input type="checkbox" id="chk-weights" checked> show all weights (faint)</label>
+    <button id="btn-reshuffle">reshuffle weights</button>
+  </div>
+  <div class="demo-status" id="st-extract">rel_thresh = 0.50 — edges at or above half the layer mean survive</div>
+</div>
+</section>
+
+<section class="section"><h2 class="title">Measurement: explicability as graph statistics</h2><p>Five properties of the extracted graph, each computable with no ground truth, each higher = more explicable: <strong>sparsity</strong> (fraction of possible edges absent), <strong>modularity</strong> (community structure), <strong>effective depth</strong> (longest path), <strong>bottleneck</strong> (narrowest cut), <strong>role diversity</strong> (distinct in/out-degree signatures). They combine into a single Mechanistic Explicability Score (0.4 recovery + 0.2 sparsity + 0.2 modularity + 0.2 depth fidelity).</p><ul style="padding-left:1.3rem; margin-bottom:1rem;"><li style="margin-bottom:0.4rem;"><strong>Architectural signatures.</strong> On identical modular-arithmetic tasks at identical 100% accuracy, MLPs and transformers wire measurably different graphs: sparsity 0.71–0.72 vs 0.41–0.44, role diversity 0.27 vs 0.62, effective depth 5 vs 4. The wiring <em>is</em> different — the graph shows it.</li><li style="margin-bottom:0.4rem;"><strong>Recovery.</strong> Where the true circuit is known by construction (boolean DAGs, modular Fourier circuits), recovery is a functional wiring overlap: does some hidden unit co-wire inputs {a, b} the way some ground-truth gate does? Recall 1.00 in 9/9 trained models — nothing the circuit needs is missing. Precision 0.33–0.81: redundant wiring is the only measurable cost.</li></ul></section>
+
+<section class="section"><h2 class="title">Reading: graph networks learn to read explicability</h2><p>The harder question is <em>what is a unit for</em> — a question about roles that structure alone should answer. GNOmE trains pure-PyTorch GCN/GAT readouts to predict a node's <strong>depth bin</strong> (input / early / mid / late / output) from the circuit graph, with node features deliberately restricted to degree and edge-weight statistics: no layer index, no positional feature, so depth must be <em>computed</em> by message passing. A feature-only MLP sees the same features with no edges.</p><ul style="padding-left:1.3rem; margin-bottom:1rem;"><li style="margin-bottom:0.4rem;"><strong>Few-shot.</strong> From just K=4 training graphs: GCN 0.913 / GAT 0.887 macro-F1 vs feature-only MLP 0.720. The gap holds at every shot count (0.14–0.19 F1).</li><li style="margin-bottom:0.4rem;"><strong>Size-invariant.</strong> Trained on 7-input circuit graphs, the reading transfers to 9-input graphs — an input count never seen — at 0.957 (GCN) / 0.934 (GAT) vs 0.755 baseline. Degree statistics shift with size; structure does not.</li><li style="margin-bottom:0.4rem;"><strong>Architecture-specific.</strong> The same reading on transformer circuit graphs collapses to 0.32 ≈ chance for <em>every</em> readout, baseline included: the reading is a learned wiring <em>language</em>, and it doesn't transfer across languages.</li></ul><div class="impact-grid"><div class="impact"><img class="impact-img" src="figs/fig4_gnn_fewshot.png" alt=""><div class="impact-body"><div class="impact-num">0.91 vs 0.72</div><p>depth roles read from structure alone, few-shot: message passing computes a multi-hop quantity that flat features cannot.</p></div></div><div class="impact"><img class="impact-img" src="figs/fig5_gnn_transfer.png" alt=""><div class="impact-body"><div class="impact-num">0.96 on unseen sizes</div><p>the reading is size-invariant (structure) — and architecture-specific (control): every readout hits chance on transformers.</p></div></div></div></section>
+
+<section class="section"><h2 class="title">What graphs cannot read</h2><p>We probed one further question: can a graph readout predict <em>recovery</em> — how much of an unseen target circuit a model learned — from structure alone? Across boolean graphs spanning input counts, gate counts, widths, and trained/untrained weights (recovery F1 0.40–0.95), every readout failed identically (test R² &lt; 0), and the feature-only baseline's identical failure shows the barrier is <strong>informational, not architectural</strong>: recovery is a statement about a target the extractor never sees, so no function of the extracted graph alone can certify it. This is the boundary that makes the positive results meaningful: graph readouts infer <em>structural</em> explicability and generalize it across sizes; <em>semantic</em> content requires comparing against the specification.</p></section>
+
+<section class="section"><h2 class="title">Key numbers</h2><div class="tablescroll"><table><thead><tr><th>experiment</th><th>measure</th><th>graph readout / GNOmE</th><th>feature-only / baseline</th><th>takeaway</th></tr></thead><tbody><tr><td>circuit recovery<br><span style="color:var(--faint)">boolean tasks, 9 models</span></td><td>recall of input-pair wiring</td><td class="win">1.00 in 9/9</td><td>—</td><td>trained models <em>contain</em> the wiring of the circuits they compute (F1 0.50–0.90, precision 0.33–0.81)</td></tr><tr><td>architectural signature<br><span style="color:var(--faint)">modular arithmetic</span></td><td>graph sparsity</td><td>MLP 0.72</td><td class="bad">transformer 0.41</td><td>transformers wire ~2× denser circuit graphs; role diversity 2.3× higher</td></tr><tr><td>few-shot depth reading<br><span style="color:var(--faint)">K=4 graphs, no positional features</span></td><td>macro-F1</td><td class="win">0.913 (GCN)</td><td class="bad">0.720</td><td>depth is multi-hop; message passing computes it, flat features cannot</td></tr><tr><td>size transfer<br><span style="color:var(--faint)">train 7 inputs → test 9 (unseen)</span></td><td>macro-F1</td><td class="win">0.957 (GCN)</td><td class="bad">0.755</td><td>structure is size-invariant; degree statistics are not</td></tr><tr><td>cross-architecture control<br><span style="color:var(--faint)">MLP → transformer graphs</span></td><td>macro-F1</td><td class="bad">0.32 (chance)</td><td class="bad">0.33 (chance)</td><td>structural reading is architecture-specific</td></tr><tr><td>recovery from structure</td><td>test R²</td><td class="bad">&lt; 0</td><td class="bad">&lt; 0</td><td>semantic content is not readable from the graph by any method</td></tr></tbody></table></div></section>
+
+<section class="section"><h2 class="title">Reproduce</h2><pre>git clone https://github.com/sehajr-singhs/gnome
+cd gnome
+pip install -r requirements.txt            # torch, numpy, networkx, matplotlib
+
+# everything below runs on CPU in ~8 minutes; numbers land in results/*.json
+python benchmarks/run_benchmark.py --out results/benchmark_cpu.json
+python benchmarks/run_gnn_experiment.py --out results/gnn_experiment.json
+python benchmarks/analyze.py                # paper numbers from committed JSONs
+python benchmarks/make_figures.py           # figs/*.png
+
+# papers
+cd manuscript && pdflatex paper && bibtex paper && pdflatex paper && pdflatex paper
+cd manuscript && pdflatex paper_ieee && bibtex paper_ieee && pdflatex paper_ieee && pdflatex paper_ieee</pre></section>
+
+<section class="section"><h2 class="title">Why it matters</h2><p>Attention maps, saliency, and patching-based circuits all try to answer graph questions — which paths, which dependencies, which modules — with non-graph instruments. GNOmE extracts the computation as a graph from real derivatives, and in doing so converts mechanistic interpretability from a collection of heuristics into a measurable, learnable, testable object of study. The graph is not a metaphor for the computation. It is the computation.</p><p class="muted">Honesty notes: all numbers come from the committed scripts and result JSONs (CPU, PyTorch 2.10); recovery is functional (input-pair co-wiring), not per-parameter identity; extraction thresholds are per-layer relative; the GNN experiments remove positional features so the signal is structure; negative results are reported as results.</p></section>
+
+<footer>GNOmE — Graph Networks for Mechanistic Explicability · Sehaj Randhir Singh · manuscript.pdf · ieee_paper.pdf · results committed, nothing simulated</footer>
+</div>
+
+<script>
+// --- DEMO: thresholding a weight matrix into a circuit graph --------------
+(function () {
+  var cv = document.getElementById('cv-extract');
+  var ctx = cv.getContext('2d');
+  var slider = document.getElementById('rng-thresh');
+  var chk = document.getElementById('chk-weights');
+  var st = document.getElementById('st-extract');
+  var btn = document.getElementById('btn-reshuffle');
+
+  var LAYERS = [5, 6, 6, 2];           // nodes per unit layer
+  var LAYER_Y = [60, 160, 260, 345];
+  var DEPTH_COLOR = ['#226999', '#2e6b4f', '#b08a2e', '#7a5aa8', '#b03a2e'];
+  var X0 = 60, X1 = 980;
+  var edges = [];
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      var t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  function makeWeights(seed) {
+    var rng = mulberry32(seed);
+    edges = [];
+    for (var k = 0; k < LAYERS.length - 1; k++) {
+      for (var i = 0; i < LAYERS[k]; i++) {
+        for (var j = 0; j < LAYERS[k + 1]; j++) {
+          var w = rng();
+          if (w < 0.25) w = 0;                 // dead edges
+          else w = 0.15 + 0.85 * Math.pow(rng(), 2.2);  // heavy tail
+          edges.push({ k: k, i: i, j: j, w: w });
+        }
+      }
+    }
+  }
+
+  function layerMean(k) {
+    var s = 0, n = 0;
+    edges.forEach(function (e) { if (e.k === k && e.w > 0) { s += e.w; n++; } });
+    return n ? s / n : 0;
+  }
+
+  function depthBin(layerIdx) {
+    var L = LAYERS.length;
+    if (layerIdx === 0) return 0;
+    if (layerIdx === L - 1) return 4;
+    var frac = layerIdx / (L - 1);
+    if (frac < 0.4) return 1;
+    if (frac < 0.7) return 2;
+    return 3;
+  }
+
+  function nodePos(k, i) {
+    var x = X0 + (X1 - X0) * (LAYERS[k] === 1 ? 0.5 : i / (LAYERS[k] - 1));
+    return { x: x, y: LAYER_Y[k] };
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    var t = slider.value / 100;
+    var kept = 0, total = 0;
+    // faint all-weights layer first
+    if (chk.checked) {
+      edges.forEach(function (e) {
+        if (e.w <= 0) return;
+        var a = nodePos(e.k, e.i), b = nodePos(e.k + 1, e.j);
+        ctx.strokeStyle = 'rgba(140,142,144,0.10)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      });
+    }
+    edges.forEach(function (e) {
+      if (e.w <= 0) return;
+      total++;
+      var thr = t * layerMean(e.k);
+      if (e.w < thr) return;
+      kept++;
+      var a = nodePos(e.k, e.i), b = nodePos(e.k + 1, e.j);
+      ctx.strokeStyle = 'rgba(34,105,153,' + (0.25 + 0.75 * Math.min(1, e.w)).toFixed(2) + ')';
+      ctx.lineWidth = 0.6 + 1.6 * e.w;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    });
+    for (var k = 0; k < LAYERS.length; k++) {
+      for (var i = 0; i < LAYERS[k]; i++) {
+        var p = nodePos(k, i);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 9, 0, Math.PI * 2);
+        ctx.fillStyle = DEPTH_COLOR[depthBin(k)];
+        ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+      }
+    }
+    var sp = total ? (1 - kept / total) : 1;
+    st.textContent = 'rel_thresh = ' + t.toFixed(2) + ' — ' + kept + '/' + total +
+      ' paths survive · sparsity ' + sp.toFixed(2) + ' (higher = more explicable)';
+  }
+
+  makeWeights(7);
+  slider.addEventListener('input', draw);
+  chk.addEventListener('change', draw);
+  btn.addEventListener('click', function () { makeWeights(Math.floor(Math.random() * 1e9)); draw(); });
+  draw();
+})();
+</script>
+</body>
+</html>

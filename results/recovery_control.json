@@ -1,0 +1,22 @@
+{
+  "n_train_graphs": 16,
+  "n_test_graphs": 8,
+  "target": "recovery_f1",
+  "test_recovery_f1_min": 0.4000000059604645,
+  "test_recovery_f1_max": 0.6153846383094788,
+  "train_recovery_f1_min": 0.5714285969734192,
+  "train_recovery_f1_max": 0.9473684430122375,
+  "gcn": {
+    "test_graph_mae": 0.22781774401664734,
+    "test_graph_r2": -4.1487215319710575
+  },
+  "gat": {
+    "test_graph_mae": 0.24704310297966003,
+    "test_graph_r2": -5.865363128339015
+  },
+  "baseline_mlp": {
+    "test_graph_mae": 0.1439753770828247,
+    "test_graph_r2": -1.8326439568055228
+  },
+  "total_time_s": 64.3
+}

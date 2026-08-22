@@ -1,0 +1,248 @@
+% IEEE conference-format version of the GNOmE paper.
+% Compile: pdflatex paper_ieee && bibtex paper_ieee && pdflatex paper_ieee && pdflatex paper_ieee
+\documentclass[conference]{IEEEtran}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{cite}
+\usepackage{xcolor}
+\usepackage[hyphens]{url}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{gnomegreen}{RGB}{44,110,73}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\title{The Computation is a Graph: GNOmE for Extraction, Measurement, and Readout of Mechanistic Explicability}
+
+\author{\IEEEauthorblockN{Sehaj Randhir Singh}
+\IEEEauthorblockA{\textit{Independent researcher; partial affiliation with NYU Tandon School of Engineering}\\[0.2em]
+\textit{Code, experiments, and paper source:} \texttt{github.com/sehajr-singhs/gnome}}}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Mechanistic interpretability asks what a trained network computes, yet most readouts
+answer with proxies---attention weights, saliency maps, activation patches---that are
+one step removed from the computation. We argue the computation already is a graph, and
+propose GNOmE (Graph Networks f\textbf{O}r \textbf{M}echanistic \textbf{E}xplicability):
+(1)~\emph{extract} a trained model's circuit graph from blockwise mean-absolute
+Jacobians, so every edge is a real derivative (cost $\approx$1.4\% of training time);
+(2)~\emph{measure} explicability as ground-truth-free graph statistics (sparsity,
+modularity, effective depth, bottleneck, role diversity) plus \emph{circuit recovery}
+where the true circuit is known by construction---trained boolean models recover their
+target circuits' input-pair wiring with recall 1.00 in 9/9 models (F1 0.50--0.90), and
+the extracted graphs carry clean architectural signatures (MLP vs.\ transformer
+sparsity 0.71 vs.\ 0.43; role diversity 2.3$\times$); (3)~\emph{read} explicability
+with graph networks that infer unit depth-roles from structure alone---no positional
+features---at 0.91--0.96 macro-F1 vs.\ 0.72--0.76 for a feature-only baseline, and that
+transfer to input sizes never seen during training while a baseline does not. A control
+shows the reading is architecture-specific (chance across architectures for every
+readout) and that semantic recovery is not predictable from structure by any method.
+Mechanistic explicability is a graph problem; GNOmE makes it measurable and learnable.
+\end{abstract}
+
+\begin{IEEEkeywords}
+mechanistic interpretability, graph neural networks, circuit analysis, Jacobian
+attribution, explainable AI
+\end{IEEEkeywords}
+
+\section{Introduction}
+A trained network is a function implemented by wiring: which units read which inputs,
+how deep information flows, where bottlenecks form. Mechanistic interpretability tries
+to recover that wiring~\cite{olah2020zoom,elhage2021math,ferrando2024survey}, but its
+instruments are proxies. Attention is a distribution over tokens, not a path through
+units~\cite{jain2020attention}; saliency measures local sensitivity, not causal
+wiring~\cite{sundararajan2017axiomatic}; patching-based circuit discovery infers edges
+by intervention, which is expensive and heuristic in thresholding~\cite{wang2022ioi,
+conmy2023acdc,zhang2023patching}.
+
+The observation behind GNOmE: a model's computation is a graph, and the weights already
+determine it. Each unit's dependence on the previous layer is a Jacobian; averaged over
+inputs and thresholded, the blockwise Jacobians define a layered DAG---the
+\emph{circuit graph}. Once the graph exists, explicability becomes graph statistics
+(measurable without ground truth), circuit recovery (certifiable where ground truth is
+known by construction), and a graph-network learning problem (readable, with
+generalization that a feature-only model cannot achieve, because roles and depths are
+multi-hop quantities~\cite{battaglia2018relational,kipf2017gcn,velickovic2018gat}).
+Because every claim is testable against known ground-truth circuits, GNOmE also
+delineates what graphs \emph{cannot} read.
+
+\textbf{Contributions.} (1) Blockwise-Jacobian circuit-graph extraction that is
+faithful, layered, and cheap. (2) A metric suite and composite Mechanistic
+Explicability Score (MES) with no ground-truth requirement, plus functional recovery
+against circuits known by construction. (3) A graph-network readout that infers unit
+depth-roles few-shot from structure alone and transfers across input sizes---with a
+controlled boundary: no readout transfers across architectures, and no readout predicts
+semantic recovery from structure. All numbers are produced by committed scripts on CPU
+and stored in committed JSONs.
+
+\section{Method}
+\subsection{Extraction}
+A model must expose its \emph{blocks} $u_k \mapsto u_{k+1}$ and unit dimensions. For
+each block we estimate the mean-absolute Jacobian
+\begin{equation}
+\mathbf{W}_k[i,j] = \mathbb{E}_x\big|\partial u_{k+1}[i]/\partial u_k[j]\big|,
+\end{equation}
+exactly in closed form for linear blocks ($|\mathbf{W}|$ is input-independent),
+diagonally for elementwise blocks ($|f'(u_j)|$), and by one autograd pass per output
+unit otherwise, averaged over batches of 256. Per-layer relative thresholding
+($\mathit{rel\_thresh} \times$ layer-mean nonzero weight) yields a layered DAG;
+residual connections are folded into the block they close. Extraction is faithful
+(edges are derivatives) and cheap: mean 0.49\,s per model vs.\ 34.4\,s mean training
+($\approx$1.4\%).
+
+\subsection{Measurement}
+Five ground-truth-free metrics, each higher = more explicable:
+\emph{sparsity} ($1 - |E|/\sum_k d_{k{+}1}d_k$), \emph{modularity} (greedy Louvain on
+the undirected graph), \emph{effective depth} (longest path), \emph{bottleneck}
+($1 - \min_k d_k/\sum_k d_k$), \emph{role diversity} (fraction of distinct in/out-degree
+signatures). Where a ground truth exists, \emph{recovery} compares input-pair co-wiring:
+does some hidden unit co-wire inputs $\{i,j\}$ the way some ground-truth gate does
+(precision/recall/F1 over input pairs). MES $= 0.4\,F_1^{\text{rec}} +
+0.2\,\text{sp} + 0.2\,\text{mod} + 0.2\,\text{depth fidelity}$.
+
+\subsection{Readout}
+GCN~\cite{kipf2017gcn} and GAT~\cite{velickovic2018gat} stacks (three layers, width 64,
+pure PyTorch) predict node depth bins (input/early/mid/late/output) from structure-only
+features: normalized in/out degree and mean incoming/outgoing edge weight---no layer
+index. A feature-only MLP baseline sees identical features without edges. Training:
+Adam, 300 epochs, cross-entropy; few-shot protocol trains on $K$ graphs and tests on
+held-out graphs.
+
+\subsection{Tasks}
+\textbf{Boolean} tasks are random layered DAGs of \{AND, OR, XOR\} gates over
+$n_{\text{in}}$ bits ($n_g$ gates, fixed seed); the ground-truth graph is the literal
+generated DAG. \textbf{Modular} tasks are $(a{+}b)\bmod p$ with one-hot inputs; the
+ground-truth circuit is the canonical Fourier/trigonometric construction
+\cite{nanda2022addition,nanda2023grokking}. Models: 3-layer MLP ($d_{\text{in}}\to32\to
+32\to d_{\text{out}}$) and a one/two-layer transformer with explicit blocks; both
+trained to 100\% train accuracy.
+
+\section{Experiments}
+All numbers are from the committed \texttt{results/benchmark\_cpu.json} and
+\texttt{results/gnn\_experiment.json}; figures are regenerated by
+\texttt{benchmarks/make\_figures.py}. Full wall time: $\approx$8 min on CPU.
+
+\subsection{Extraction is faithful: recovery}
+Across 9 trained boolean models (gate counts 8/12/16 $\times$ 3 seeds), every extracted
+graph contains the target circuit's input-pair wiring: \textbf{recall 1.00 in 9/9
+models}, mean F1 0.71 (range 0.50--0.90), mean precision 0.58 (0.33--0.81;
+Fig.~\ref{fig:recov}). The only loss is precision---redundant co-wiring beyond the
+minimal circuit, the measurable cost of overparameterized learning. Recall never fails.
+
+\subsection{Measurement separates architectures}
+On identical modular-arithmetic tasks (Table~\ref{tab:bench}), MLPs and transformers
+produce measurably different circuit graphs: MLP sparsity 0.71--0.72 vs.\ transformer
+0.41--0.44 (transformers wire ~2$\times$ denser graphs), role diversity 0.27 vs.\ 0.62
+at $p{=}5$ (2.3$\times$), effective depth 5 vs.\ 4. Two architectures at identical test
+accuracy instantiate the same function with different wiring---visible in the graph.
+
+\begin{table}[!t]
+\centering
+\caption{Explicability metrics and recovery (means over 3 seeds for boolean rows).}
+\label{tab:bench}
+\small
+\begin{tabular}{lcccc}
+\toprule
+task & model & sparsity & depth & rec. F1 \\
+\midrule
+bool n7 g8  & MLP   & 0.714 & 5.0 & 0.637 \\
+bool n7 g12 & MLP   & 0.711 & 5.0 & 0.743 \\
+bool n7 g16 & MLP   & 0.708 & 5.0 & 0.763 \\
+mod p5      & MLP   & 0.722 & 5.0 & --- \\
+mod p5      & transf. & 0.411 & 4.0 & --- \\
+mod p7      & MLP   & 0.715 & 5.0 & --- \\
+mod p7      & transf. & 0.443 & 4.0 & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Graph networks read explicability}
+\textbf{Few-shot roles.} Training on $K$ graphs and testing on held-out graphs
+(Table~\ref{tab:exp1}), graph readouts beat the feature-only baseline by 0.14--0.19
+macro-F1 at every $K$; at $K{=}4$: GCN 0.91, GAT 0.89, baseline 0.72. Depth is
+multi-hop; message passing computes it and flat features cannot.
+
+\begin{table}[!t]
+\centering
+\caption{Few-shot depth-role reading (test macro-F1; structure-only features).}
+\label{tab:exp1}
+\small
+\begin{tabular}{lccc}
+\toprule
+$K$ & GCN & GAT & baseline \\
+\midrule
+2 & 0.871 & 0.868 & 0.727 \\
+4 & \textbf{0.913} & 0.887 & 0.720 \\
+6 & 0.891 & 0.869 & 0.729 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Transfer: sizes yes, architectures no.} Training on 7-input MLP circuit graphs
+and testing on 9-input graphs (an input count never seen during GNN training), the graph
+readouts transfer essentially losslessly (GCN 0.96, GAT 0.93---\emph{above} same-size
+performance) while the baseline saturates (0.76); degree statistics shift with input
+count, structure does not (Table~\ref{tab:transfer}). A control on transformer graphs
+of the same task collapses every readout---GCN, GAT, and baseline---to $\approx$0.32
+(chance): depth-bin semantics and wiring statistics are architecture-specific. The
+reading is \emph{size-invariant but architecture-specific}.
+
+\begin{table}[!t]
+\centering
+\caption{Transfer of structural reading (train: 6 MLP, 7-input graphs).}
+\label{tab:transfer}
+\small
+\begin{tabular}{lccc}
+\toprule
+test set & GCN & GAT & baseline \\
+\midrule
+same-size MLP (held out) & 0.901 & 0.913 & 0.760 \\
+larger-size MLP ($n_{\text{in}}{=}9$, unseen) & \textbf{0.957} & 0.934 & 0.755 \\
+transformer (control) & 0.322 & 0.329 & 0.328 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{../figs/fig2_recovery.png}
+\caption{Circuit recovery on boolean tasks: recall 1.00 in 9/9 models; F1 bounded only
+by redundant wiring.}
+\label{fig:recov}
+\end{figure}
+
+\subsection{Boundary condition}
+Can a graph readout predict \emph{recovery}---how much of an unseen target circuit a
+model learned---from structure alone? Collecting boolean graphs spanning input counts,
+gate counts, widths, and trained/untrained weights (recovery F1 0.40--0.95)and training on $\{5,7\}$-input graphs to predict 9-input recovery F1, all readouts
+failed (test $R^2<0$ for GCN, GAT, and baseline: $-4.1$, $-5.9$, $-1.8$; committed in
+\texttt{results/recovery\_control.json}); the feature-only baseline's failure shows the
+barrier is informational, not architectural: recovery is a statement about a target the
+extractor never sees. Readouts infer \emph{structural} explicability and generalize
+it across sizes; \emph{semantic} content requires comparing against the specification.
+
+\section{Conclusion}
+GNOmE converts mechanistic interpretability from a collection of heuristics into a
+measurable, learnable object: extract the computation as a graph from real derivatives,
+measure it with graph statistics and recovery against known circuits, and read it with
+graph networks that generalize across sizes. The framework's testability pays off at
+the boundary: structural explicability is size-invariant but architecture-specific, and
+semantic recovery is not readable from structure by any method. The graph is not a
+metaphor for the computation---it is the computation. Scaling graph-based explicability
+readout to production-scale models, and designing cross-architecture transferable
+readers, are the immediate next steps.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

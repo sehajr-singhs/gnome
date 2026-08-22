@@ -1,0 +1,84 @@
+{
+  "config": {
+    "out": "results/gnn_experiment.json",
+    "epochs": 250,
+    "gnn_epochs": 350,
+    "exp": "2",
+    "fast": false
+  },
+  "exp1": {
+    "K2": {
+      "n_train_graphs": 2,
+      "n_test_graphs": 6,
+      "gcn": {
+        "test_macro_f1": 0.8709969520568848,
+        "test_acc": 0.9586374759674072
+      },
+      "gat": {
+        "test_macro_f1": 0.8684839010238647,
+        "test_acc": 0.9647201895713806
+      },
+      "baseline_mlp": {
+        "test_macro_f1": 0.7267196774482727,
+        "test_acc": 0.9464720487594604
+      }
+    },
+    "K4": {
+      "n_train_graphs": 4,
+      "n_test_graphs": 4,
+      "gcn": {
+        "test_macro_f1": 0.9134521484375,
+        "test_acc": 0.959854006767273
+      },
+      "gat": {
+        "test_macro_f1": 0.8874742388725281,
+        "test_acc": 0.94525545835495
+      },
+      "baseline_mlp": {
+        "test_macro_f1": 0.71965491771698,
+        "test_acc": 0.9379562139511108
+      }
+    },
+    "K6": {
+      "n_train_graphs": 6,
+      "n_test_graphs": 2,
+      "gcn": {
+        "test_macro_f1": 0.8909199833869934,
+        "test_acc": 0.9671533107757568
+      },
+      "gat": {
+        "test_macro_f1": 0.8693631291389465,
+        "test_acc": 0.956204354763031
+      },
+      "baseline_mlp": {
+        "test_macro_f1": 0.7286936044692993,
+        "test_acc": 0.9489051103591919
+      }
+    }
+  },
+  "total_time_s": 87.8,
+  "exp2": {
+    "n_train_graphs": 6,
+    "n_test_same_size": 2,
+    "n_test_larger_size": 4,
+    "n_test_transformer": 4,
+    "train_arch": "mlp_bool_n7_g12",
+    "larger_size_arch": "mlp_bool_n9_g12",
+    "transformer_arch": "tf_bool_n7_g12",
+    "gcn": {
+      "test_same_size_macro_f1": 0.9008509516716003,
+      "test_larger_size_macro_f1": 0.9574109315872192,
+      "test_tf_macro_f1": 0.32182979583740234
+    },
+    "gat": {
+      "test_same_size_macro_f1": 0.9125372767448425,
+      "test_larger_size_macro_f1": 0.9335358738899231,
+      "test_tf_macro_f1": 0.32922258973121643
+    },
+    "baseline_mlp": {
+      "test_same_size_macro_f1": 0.7599986791610718,
+      "test_larger_size_macro_f1": 0.7549242377281189,
+      "test_tf_macro_f1": 0.32768774032592773
+    }
+  }
+}
