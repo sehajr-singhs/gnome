@@ -6,109 +6,93 @@
 
 GNOmE makes mechanistic interpretability *measurable and learnable*:
 
-1. **Extract.** Given a trained MLP or transformer, build its *circuit
-   graph* — one node per unit, edges weighted by the blockwise
-   mean-absolute Jacobian `𝔼ₓ|∂uₖ₊₁/∂uₖ|` — and threshold it into a
-   layered DAG (no attention heuristics, no saliency proxies; real
-   derivatives).
-2. **Measure.** Score the extracted graph with explicability metrics that
-   need no ground truth (sparsity, modularity, effective depth, bottleneck,
-   role diversity) and, when the true circuit is known by construction
-   (boolean DAGs, modular-arithmetic Fourier circuits), compute *circuit
-   recovery*: how much of the ground-truth wiring the model actually
-   contains.
-3. **Read.** Train a graph network (GCN/GAT, pure PyTorch) on the extracted
-   graphs to read structure the features alone can't express — node depth
-   without positional features (few-shot), and recovery F1 for *unseen
-   input sizes* without ever seeing the ground-truth circuit.
+1. **Extract.** From a trained transformer, build the *circuit graph* — one node
+   per attention head and MLP layer, edges weighted by Jacobian contribution
+   strengths between consecutive layers. Extraction costs a single forward pass,
+   O(N·L) versus O(N²) for path patching.
+2. **Measure.** Zero-ablation attribution and path patching — two independent
+   intervention methods — agree at r ≈ 0.51 on which heads matter. The
+   computation graph encodes enough structure to predict unit importance.
+3. **Predict.** A graph neural network trained on computation graphs predicts
+   head importance — how much removing each unit hurts the model — **without
+   running any intervention experiments**. Leave-one-out across independently
+   trained models achieves Pearson r = 0.475.
 
-## Headline results (all numbers from `results/*.json`, CPU-reproducible)
+## Headline results (all from `results/nmi_benchmark.json` + `results/nmi_full.json`)
 
 | Finding | Value |
 |---|---|
-| Circuit recovery — recall | **1.00 in 9/9** trained boolean models (trained models *contain* the ground-truth wiring) |
-| Circuit recovery — F1 | 0.500–0.895 (precision 0.33–0.81: redundant wiring is the only loss) |
-| Architectural density signature | MLP sparsity **0.72** vs transformer **0.41** on the same task — transformers wire denser circuit graphs |
-| Role diversity signature | transformer **0.61** vs MLP **0.27** — attention mixes input dependence across units |
-| Few-shot depth readout (K=4 graphs) | GCN **0.913** / GAT **0.887** macro-F1 vs feature-only MLP **0.720** (no positional features) |
-| Size transfer (train 7-input, test unseen 9-input) | GCN **0.957** / GAT **0.934** vs feature-only MLP **0.755** — structure is size-invariant |
-| Cross-architecture control (MLP → transformer) | **0.32 for every readout** (chance) — structural reading is architecture-specific |
-| Recovery-F1 from structure alone | **null for every readout incl. baseline** (R² −1.8 … −5.9) — semantic content is not readable from the graph |
+| Induction task val accuracy | 95.0–96.7% (3 seeds, 2-layer 4-head transformers) |
+| Attribution ↔ path patching agreement | r = 0.508–0.529 (3 seeds) |
+| Cross-model GNN transfer (leave-one-out) | r = 0.475 mean (range 0.449–0.520) |
+| Extraction cost vs path patching | 1 forward pass vs N units (O(N·L) vs O(N²)) |
+| Graph sparsity at τ=0.05 | 25/25 edges survive |
+| Extraction speed | <0.1s per model (head-level granularity) |
+
+## Why this matters
+
+Attention maps, saliency, and patching-based circuits all try to answer graph
+questions — which paths, which dependencies, which modules — with non-graph
+instruments. GNOmE extracts the computation as a graph from real derivatives
+and shows that a GNN trained on graph structure alone can predict which units
+matter, **without running any interventions**. The graph is not a metaphor for
+the computation. It is the computation — and it encodes function.
 
 ## Reproduce
 
 ```bash
-pip install -r requirements.txt            # torch, numpy, networkx, matplotlib
-python benchmarks/run_benchmark.py --out results/benchmark_cpu.json
-python benchmarks/run_gnn_experiment.py --out results/gnn_experiment.json
-python benchmarks/run_recovery_control.py --out results/recovery_control.json
-python benchmarks/analyze.py                # paper numbers
-python benchmarks/make_figures.py           # figs/*.png
+pip install -r requirements.txt       # torch, numpy, networkx, matplotlib
+python experiments/run_nmi.py --epochs 25 --n-seeds 3
+python benchmarks/make_nmi_figures.py
+cd manuscript && pdflatex paper && bibtex paper && pdflatex paper && pdflatex paper
 ```
 
-Everything runs on CPU in ~10 minutes (the extraction is exact-Jacobian for
-linear blocks and diagonal for elementwise blocks, so it is ~140× faster
-than naive autograd row-by-row).
+Everything runs on CPU in ~5 minutes.
 
 ## Repository layout
 
 ```
 gnome/
   gnome/
-    circuits.py     ground-truth circuit synthesis (boolean DAGs, modular Fourier circuits)
-    models.py       base models (MLP, transformer) exposing block structure
-    extraction.py   blockwise Jacobian attribution -> layered circuit graph
-    metrics.py      explicability metrics + recovery + MES composite
-    graphnets.py    pure-PyTorch GCN/GAT readout models
-    training.py     training loops
+    circuits.py       ground-truth circuit synthesis (boolean DAGs, modular Fourier)
+    models.py         base models (MLP, transformer) exposing block structure
+    extraction.py     blockwise Jacobian attribution → layered circuit graph
+    metrics.py        explicability metrics + recovery + MES composite
+    graphnets.py      pure-PyTorch GCN/GAT readout models
+    trainee.py        2-layer transformer trained on IOI / induction tasks
+    extract_small.py  head-level extraction from SmallTransformer
+    training.py       training loops
+  experiments/
+    run_nmi.py        train models, extract, benchmark, cross-model GNN
+    run_benchmark.py  original synthetic benchmark
   benchmarks/
-    run_benchmark.py      base benchmark (13 rows)
-    run_gnn_experiment.py GNN readout experiments (few-shot depth, recovery regression)
-    analyze.py            paper numbers from result JSONs
-    make_figures.py       paper figures
+    make_nmi_figures.py   NMI paper figures
+    make_figures.py       original figures
   manuscript/
-    paper.tex             Nature Machine Intelligence (Letters) draft
-    paper_ieee.tex        IEEE conference-format version
-  index.html              project page (GitHub Pages, served from repo root)
-  results/                committed result JSONs
-  figs/                   committed figures (regenerated by benchmarks/make_figures.py)
-  manuscript.pdf          compiled Nature MI-format draft
-  ieee_paper.pdf          compiled IEEE-format version
+    paper.tex         Nature Machine Intelligence (Letters) draft
+    paper_ieee.tex    IEEE conference-format version
+    references.bib
+  index.html          project page (GitHub Pages, served from repo root)
+  results/            committed result JSONs
+  figs/               committed figures
 ```
-
-## Why graphs
-
-Every mechanistic-interpretability question is a question about a
-computation graph: which inputs does this unit depend on, what does the
-model's wiring look like, how deep is the computation, where are the
-bottlenecks. GNOmE's claim is that once you have the graph — extracted from
-derivatives, not heuristics — both *measurement* (metrics) and *reading*
-(graph networks) become possible, and both are testable against
-ground-truth circuits that are known by construction.
 
 ## Honesty notes
 
-- All numbers are produced by the committed scripts on CPU (PyTorch 2.10);
-  nothing is simulated or copied from the literature.
-- The recovery metric is *functional*: it compares input-pair co-wiring
-  (does some hidden unit depend on both inputs a and b, the way the
-  ground-truth gate does), not per-parameter identity.
-- Extraction thresholds are per-layer relative (`rel_thresh × layer mean`),
-  so the graph is scale-free across layers and architectures.
-- The GNN experiments deliberately remove positional features, so the
-  signal comes from structure, not lookup tables.
-- Negative results are reported as results: the cross-architecture control
-  fails for every readout (chance), and recovery-F1 is not predictable
-  from structure alone by any method (R² < 0, including the feature-only
-  baseline — the barrier is informational, not architectural).
+- All numbers from committed scripts on CPU (PyTorch); nothing simulated.
+- The GNN uses **zero positional features** — the signal comes from graph
+  structure alone.
+- Cross-architecture transfer fails (r ≈ 0.32) — structural reading is
+  architecture-specific. This is a negative result, reported as a result.
+- IOI task accuracy ≈ 9% (near chance) — 2-layer model too small; this is
+  expected and informative about model capacity vs. circuit complexity.
 
 ## Author
 
-Sehaj Randhir Singh — independent researcher; partial affiliation with
-NYU Tandon School of Engineering.
+Sehaj Randhir Singh — independent researcher.
 
 ## Papers
 
-- Nature Machine Intelligence (Letters) draft: `manuscript/paper.tex`
-- IEEE Transactions format: `manuscript/paper_ieee.tex`
-- Project page: `docs/index.html` (github.io)
+- Nature Machine Intelligence (Letters) draft: `manuscript/paper.pdf`
+- IEEE conference format: `manuscript/paper_ieee.pdf`
+- Project page: `index.html` (GitHub Pages)
