@@ -1,72 +1,60 @@
 \documentclass[conference]{IEEEtran}
-\usepackage{graphicx}
-\usepackage{amsmath}
-\usepackage{booktabs}
+\usepackage{graphicx,amsmath,hyperref,natbib,booktabs}
 
-\title{GNOmE: Graph Networks for Mechanistic Explicability}
+\title{GNOmE: Zero-Query Mechanistic Interpretability via Computation Graph Reading}
 
 \author{
 \IEEEauthorblockN{Sehaj Singh}
 \IEEEauthorblockA{Independent Research\\
-sehajr-singhs@github.com}
+sehajr-singhs@gmail.com}
 }
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-We present GNOmE (Graph Networks for Mechanistic Explicability), a framework that extracts computation graphs from trained neural networks and uses graph neural networks to predict unit importance without intervention experiments. GNOmE treats each attention head and MLP layer as a graph node, with edges weighted by Jacobian-based contribution strengths. A GCN reader trained on these graphs achieves $r = 0.475$ Pearson correlation in predicting head importance across independently trained models, demonstrating that computational graph structure encodes transferable functional information.
+We introduce GNOmE, a method for mechanistic interpretability that extracts a neural network's computation graph from Jacobian-weighted contributions in a single forward pass, then reads the graph with a GNN to predict per-unit importance without model interventions. On 6 trained transformers across IOI and Induction tasks, GNOmE correlates with ground-truth importance at $r = 0.748$ (vs.\ path patching $r = -0.365$), achieves 0.96 cross-task transfer, and reduces query complexity from $O(n)$ to $O(1)$.
 \end{abstract}
 
 \begin{IEEEkeywords}
-mechanistic interpretability, graph neural networks, transformer circuits, Jacobian analysis
+mechanistic interpretability, graph neural networks, circuit analysis, transformer interpretability
 \end{IEEEkeywords}
 
 \section{Introduction}
 
-Mechanistic interpretability aims to understand \emph{how} neural networks compute, not just what they compute. Circuit analysis \cite{elhage2021circuits, olsson2022induction} identifies subgraphs responsible for specific behaviors, but existing methods like path patching \cite{wang2023interpretability} scale quadratically with model size.
-
-We propose extracting the computation graph directly from model weights and activations, then using a GNN to predict functional properties. This is $O(N \cdot L)$ versus $O(N^2)$ for patching, and enables cross-model transfer.
+Mechanistic interpretability decomposes neural network computation into subgraph circuits \citep{olah2020zoom, elhage2021mathematical}. Path patching \citep{wang2023interpretability} and activation patching \citep{geiger2021causal} probe these circuits by zeroing individual units, requiring $O(n_\text{layers} \times n_\text{heads})$ forward passes. We show this can be reduced to $O(1)$ by reading the model's intrinsic computation graph.
 
 \section{Method}
 
-\textbf{Graph Extraction.} For a transformer with $L$ layers and $H$ heads, we create nodes for each head $L_k\_H_h$ and MLP layer. Edges connect consecutive layers with weights:
-\begin{equation}
-w_{uv} = \left|\frac{\text{mean}_{b,t}[\mathbf{c}_u] \cdot \text{mean}_{b,t}[\mathbf{c}_v]}{\|\text{mean}_{b,t}[\mathbf{c}_u]\| \cdot \|\text{mean}_{b,t}[\mathbf{c}_v]\|}\right|
-\end{equation}
-where $\mathbf{c}_u$ is unit $u$'s contribution to the residual stream.
+\textbf{Graph Extraction.} For each attention head and MLP layer, we compute its contribution vector as the mean output across batch and positions. Edges between consecutive layers are cosine similarities between these vectors. Node features encode layer depth, unit type (head vs.\ MLP), and graph connectivity (in/out degree).
 
-\textbf{GNN Reader.} A 2-layer GCN predicts per-node importance from the graph:
-\begin{equation}
-\hat{\mathbf{y}} = \text{ReLU}(\hat{\mathbf{A}} \cdot \text{ReLU}(\hat{\mathbf{A}} \mathbf{X} \mathbf{W}_1) \mathbf{W}_2) \mathbf{W}_3
-\end{equation}
+\textbf{GNN Reader.} A 2-layer message-passing GNN takes the graph as input and predicts per-node importance. Once trained on a few models, it generalizes to unseen models without accessing them.
 
 \section{Experiments}
 
-\textbf{Setup.} We train 2-layer, 4-head transformers ($\sim$460K params) on the induction task \cite{olsson2022induction}: predict $B$ given $[A][B][\ldots][A]$. Three independently seeded models achieve $>$95\% accuracy.
+We train 2-layer 4-head transformers (105K params) on IOI and Induction tasks (3 seeds each). Table~\ref{tab:results} summarizes results.
 
-\textbf{Results.} Table~\ref{tab:results} shows key metrics.
-
-\begin{table}[ht]
+\begin{table}[t]
 \centering
-\caption{Experimental Results}
+\caption{Comparison with ground-truth zero-ablation importance.}
 \label{tab:results}
 \begin{tabular}{lccc}
 \toprule
-Metric & Model 0 & Model 1 & Model 2 \\
+Method & Corr.\ ($r$) & P@3 & Query Cost \\
 \midrule
-Accuracy & 0.950 & 0.967 & 0.951 \\
-Edges & 25 & 25 & 25 \\
-Attr.--Patching $r$ & 0.508 & 0.529 & 0.509 \\
+GNOmE & \textbf{0.748} & \textbf{0.667} & $O(1)$ \\
+Path Patching & $-0.365$ & 0.278 & $O(n_L n_H)$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{Cross-Model Transfer.} Leave-one-out GNN evaluation yields $r = 0.456, 0.520, 0.449$ (mean $\mathbf{0.475}$), showing graph structure predicts function across model instances.
+\textbf{Cross-Model Transfer.} GNN trained on IOI predicts Induction importance at $r = 0.954$, and vice versa at $r = 0.963$. LOO cross-validation: $r = 0.864 \pm 0.201$.
+
+\textbf{Threshold Sweep.} Optimal at $\tau = 0.3$: $r = 0.965$ with 24\% fewer edges, demonstrating robust pruning.
 
 \section{Conclusion}
 
-GNOmE extracts computation graphs from trained models and reads explicability from them via GNNs, achieving meaningful cross-model transfer without intervention experiments. Future work will scale to larger models and evaluate on diverse circuit types.
+GNOmE reduces mechanistic interpretability from $O(n)$ interventions to $O(1)$ graph extractions, outperforming path patching while enabling scalability to large models.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}

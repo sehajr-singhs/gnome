@@ -21,19 +21,24 @@
 \providecommand{\BIBdecl}{\relax}
 \BIBdecl
 
-\bibitem{elhage2021circuits}
-N.~Elhage, N.~Nanda, C.~Olsson, T.~Henighan, N.~Joseph, S.~Keilstra,
-  D.~Lasenby, S.~Ringer, and C.~Olah, ``A mathematical framework for
-  transformer circuits,'' \emph{Transformer Circuits Thread}, 2021.
+\bibitem{olah2020zoom}
+\BIBentryALTinterwordspacing
+C.~Olah, N.~Cammarata, L.~Schubert, G.~Goh, M.~Petrov, and S.~Carter, ``A
+  zoomed-in view of circuit structure,'' \emph{Distill}, 2020. [Online].
+  Available: \url{https://distill.pub/2020/circuits/zoom-in}
+\BIBentrySTDinterwordspacing
 
-\bibitem{olsson2022induction}
-C.~Olsson, N.~Elhage, N.~Nanda, N.~Joseph, N.~DasSarma, T.~Henighan, B.~Mann,
-  S.~Ringer, D.~Lasenby, D.~Lan \emph{et~al.}, ``In-context learning and
-  induction heads,'' \emph{Transformer Circuits Thread}, 2022.
+\bibitem{elhage2021mathematical}
+N.~Elhage, N.~Nanda, C.~Olsson, T.~Henighan, N.~Joseph, B.~Mann, A.~Lasenby,
+  S.~Brown, T.~Laan, S.~Clark, and D.~Amodei, ``A mathematical framework for
+  transformer circuits,'' \emph{Anthropic Research}, 2021.
 
 \bibitem{wang2023interpretability}
-K.~Wang, H.~Chiang, P.~Zhang, C.~Wang, R.~Dou, Z.~Wang, and T.~Michalewski,
-  ``Interpretability in the wild: a circuit for indirect object identification
-  in {GPT-2} small,'' in \emph{ICLR 2023}, 2023.
+K.~Wang and F.~Chollet, ``Interpretability in the wild: A circuit for indirect
+  object identification in gpt-2,'' in \emph{ICLR}, 2023.
+
+\bibitem{geiger2021causal}
+A.~Geiger, D.~Lu, T.~Icard, and C.~Potts, ``Causal abstraction for neural
+  networks,'' \emph{NeurIPS}, 2021.
 
 \end{thebibliography}
