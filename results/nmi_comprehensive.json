@@ -1,0 +1,241 @@
+{
+  "model": "gpt2-small",
+  "n_layers": 12,
+  "n_heads": 12,
+  "d_model": 768,
+  "n_units": 156,
+  "n_edges": 1583,
+  "edge_threshold": 0.15,
+  "density": 0.06504766600920447,
+  "circuit_recovery": {
+    "recovered": 0,
+    "total": 7,
+    "rate": 0.0
+  },
+  "validation": {
+    "duplicate_token": {
+      "units": [
+        "L8_H0",
+        "L9_H6",
+        "L9_H9"
+      ],
+      "ranks": [
+        111,
+        61,
+        137
+      ],
+      "mean_rank": 103.0,
+      "percentile": 66.02564102564102,
+      "pass": false
+    },
+    "s_inhibition": {
+      "units": [
+        "L8_H1"
+      ],
+      "ranks": [
+        62
+      ],
+      "mean_rank": 62.0,
+      "percentile": 39.743589743589745,
+      "pass": false
+    },
+    "name_mover": {
+      "units": [
+        "L10_H0"
+      ],
+      "ranks": [
+        77
+      ],
+      "mean_rank": 77.0,
+      "percentile": 49.35897435897436,
+      "pass": false
+    },
+    "induction_head": {
+      "units": [
+        "L5_H1",
+        "L6_H9"
+      ],
+      "ranks": [
+        58,
+        132
+      ],
+      "mean_rank": 95.0,
+      "percentile": 60.8974358974359,
+      "pass": false
+    },
+    "backup_name_mover": {
+      "units": [
+        "L9_H0",
+        "L9_H1",
+        "L10_H4",
+        "L11_H10"
+      ],
+      "ranks": [
+        110,
+        78,
+        119,
+        153
+      ],
+      "mean_rank": 115.0,
+      "percentile": 73.71794871794872,
+      "pass": false
+    },
+    "negative_name_mover": {
+      "units": [
+        "L10_H7",
+        "L11_H9"
+      ],
+      "ranks": [
+        115,
+        151
+      ],
+      "mean_rank": 133.0,
+      "percentile": 85.25641025641026,
+      "pass": false
+    },
+    "previous_token": {
+      "units": [
+        "L4_H11",
+        "L5_H5"
+      ],
+      "ranks": [
+        106,
+        103
+      ],
+      "mean_rank": 104.5,
+      "percentile": 66.98717948717949,
+      "pass": false
+    }
+  },
+  "top_heads": [
+    [
+      "L1_H6",
+      1.0
+    ],
+    [
+      "L2_H10",
+      0.9257973458914802
+    ],
+    [
+      "L1_H8",
+      0.9215820193072296
+    ],
+    [
+      "L2_H7",
+      0.7543948281649503
+    ],
+    [
+      "L2_H11",
+      0.753738060374362
+    ],
+    [
+      "L1_H1",
+      0.6629669944742251
+    ],
+    [
+      "L0_H10",
+      0.6347186984828309
+    ],
+    [
+      "L1_H10",
+      0.5895053353875742
+    ],
+    [
+      "L1_H3",
+      0.5864548088019458
+    ],
+    [
+      "L1_H0",
+      0.5698720528277622
+    ],
+    [
+      "L1_H7",
+      0.5510490844903183
+    ],
+    [
+      "L1_H11",
+      0.5175440244314243
+    ],
+    [
+      "L2_H1",
+      0.4866297738964554
+    ],
+    [
+      "L1_H2",
+      0.4390904742224867
+    ],
+    [
+      "L2_H6",
+      0.4348820493055854
+    ],
+    [
+      "L2_H9",
+      0.4329858871302083
+    ],
+    [
+      "L1_H5",
+      0.4241884756548034
+    ],
+    [
+      "L0_H7",
+      0.4081842450817425
+    ],
+    [
+      "L2_H5",
+      0.40697036269050263
+    ],
+    [
+      "L2_H3",
+      0.4065291708795082
+    ],
+    [
+      "L1_H4",
+      0.40555777968121104
+    ],
+    [
+      "L0_H3",
+      0.40454601000978513
+    ],
+    [
+      "L3_H8",
+      0.39386148579431357
+    ],
+    [
+      "L3_H7",
+      0.3861749926503838
+    ],
+    [
+      "L3_H1",
+      0.38481272616067874
+    ]
+  ],
+  "baseline_comparison": {
+    "gnome": {
+      "correlation": -0.18739530086258305,
+      "precision@3": 0.0,
+      "precision@5": 0.0,
+      "method": "GNOmE (zero query, O(1))"
+    },
+    "random": {
+      "correlation": -0.004448613865193802,
+      "correlation_std": 0.08169696611762436,
+      "precision@3": 0.02,
+      "method": "Random (chance baseline)"
+    },
+    "layer_heuristic": {
+      "correlation": 0.26140597803868604,
+      "precision@3": 0.3333333333333333,
+      "method": "Layer heuristic (deeper = important)"
+    },
+    "gnome_layer_norm": {
+      "correlation": -0.08727460847414173,
+      "precision@3": 0.0,
+      "method": "GNOmE (layer-normalized)"
+    }
+  },
+  "threshold_sweep": {},
+  "extraction_time_s": 110.91259407997131,
+  "centrality_time_s": 60.333128929138184,
+  "total_time_s": 147.14037609100342,
+  "n_prompts": 22
+}

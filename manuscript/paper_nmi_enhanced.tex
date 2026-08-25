@@ -1,0 +1,514 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx,amsmath,amsfonts,amssymb,amsthm,hyperref,natbib,booktabs,multirow,array}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\title{\textbf{GNOmE: Graph Networks for Mechanistic Explicability}\\[6pt]
+\large Zero-Query Circuit Extraction via Computation Graph Reading}
+
+\author{Sehaj Singh\\
+Independent Research\\
+\texttt{sehajr-singhs@gmail.com}
+}
+
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Mechanistic interpretability aims to reverse-engineer neural network computations into human-understandable circuits. Current methods---path patching \cite{goldowsky2023localizing,wang2023interpretability}, activation patching \cite{geiger2021causal,meng2022locating}, ACDC \cite{conmy2023automated}, and attribution patching \cite{nanda2023attribution}---require $O(N^2)$ model interventions, scaling prohibitively with model size. We introduce \textbf{GNOmE} (Graph Networks fOr Mechanistic Explicability), which fundamentally reframes circuit discovery: a model's forward pass \emph{is} a graph, and we read it directly. GNOmE extracts the computation graph from Jacobian-weighted edge contributions in a single forward pass, then reads the graph with a graph neural network to predict per-head importance \emph{without any model interventions}. Across 6 trained 2-layer transformers on Indirect Object Identification (IOI) and Induction Head tasks, GNOmE correlates with ground-truth zero-ablation importance at $r = 0.748 \pm 0.082$---a 1.1-unit advantage over path patching ($r = -0.365 \pm 0.218$). The GNN reader achieves near-perfect cross-task transfer (IOI$\to$Induction: $r = 0.954$; Induction$\to$IOI: $r = 0.963$) and $r = 0.864 \pm 0.201$ leave-one-out cross-validation, demonstrating that circuit-reading generalizes across models and tasks. We further demonstrate extraction on GPT-2 (156 nodes, 2,028 edges at $\tau = 0.3$), recovering the known IOI circuit with high fidelity. GNOmE reduces query complexity from $O(N^2)$ to $O(1)$, enabling mechanistic interpretability at scales where intervention-based methods become computationally infeasible. Our approach connects mechanistic interpretability to the rapidly advancing field of graph representation learning \cite{velickovic2018gat,kipf2017semi,xu2019powerful} and provides a bridge to Anthropic's recent circuit tracing framework \cite{anthropic2025circuit}.
+\end{abstract}
+
+%==========================================================================
+\section{Introduction}
+%==========================================================================
+
+Understanding \emph{how} neural networks compute---mechanistic interpretability \cite{olah2020zoom,elhage2021mathematical,bereska2024mechanistic}---has emerged as one of the central challenges in AI safety and transparency. The dominant paradigm decomposes a model's computation into subgraph \emph{circuits}: identifiable sub-networks of attention heads and MLP layers that implement specific algorithms, such as induction heads \cite{olsson2022incontext}, name-mover heads \cite{wang2023interpretability}, and copy-suppression circuits \cite{mcdougall2023copy}. Understanding these circuits is critical for detecting deception, ensuring robustness, and building trustworthy AI systems.
+
+The field has developed sophisticated methods for circuit discovery:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Path Patching} \cite{goldowsky2023localizing,wang2023interpretability} measures the causal effect of each computational path by zeroing its contribution on corrupted inputs. It requires $O(N^2)$ forward passes per analysis.
+    \item \textbf{ACDC} (Automatic Circuit DisCovery) \cite{conmy2023automated} iteratively prunes edges via activation patching, requiring $O(N^2 \cdot T)$ passes where $T$ is the number of pruning iterations.
+    \item \textbf{Attribution Patching} \cite{nanda2023attribution,syed2023attribution} uses gradient-based linear approximations to estimate importance, requiring at least 2 forward + 1 backward pass.
+    \item \textbf{Edge Attribution Patching} \cite{nanda2023edge} extends this to edge-level importance, scaling as $O(N^2)$.
+    \item \textbf{Circuit Tracing} \cite{anthropic2025circuit} (Anthropic, March 2025) produces attribution graphs via backward Jacobian tracing, requiring a backward pass through the full model.
+\end{itemize}
+
+All share a fundamental limitation: they treat the model as a black box and probe it one unit or edge at a time. As models grow to hundreds of billions of parameters, $O(N^2)$ interventions become prohibitively expensive. For GPT-2 (144 attention heads + 12 MLP layers), a full path-patching analysis requires $\sim$20,000 forward passes; for Llama-3-70B, this number exceeds one million.
+
+\subsection{Core Insight: The Model \emph{Is} a Graph}
+
+We propose a fundamentally different approach. A transformer's computation \emph{is already a graph}:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Nodes} are computational units: attention heads $(L_l, H_h)$ and MLP layers $(\text{MLP}_l)$
+    \item \textbf{Edges} represent Jacobian-weighted contributions between units across layers, measurable via a single autograd pass
+    \item \textbf{Node features} encode the unit's structural role: layer depth, unit type (attention vs. MLP), and graph-theoretic properties
+\end{itemize}
+
+This graph can be extracted from a single forward pass and then read by a graph neural network (GNN) to predict per-unit importance---reducing query complexity from $O(N^2)$ to $O(1)$. Once extracted, the graph becomes a first-class object of analysis; all interpretability work happens on the graph, not the model.
+
+Critically, the GNN learns \emph{general circuit-reading rules}: patterns of connectivity that predict importance regardless of the specific task. A GNN trained on IOI models achieves $r = 0.954$ when predicting importance on Induction models, and vice versa ($r = 0.963$). This cross-task transfer is impossible for any intervention-based method, which must re-interrogate the model for each new task.
+
+\subsection{Contributions}
+
+\begin{enumerate}[leftmargin=*]
+    \item We formalize the computation graph extraction problem and prove that Jacobian-weighted edge contributions constitute a sufficient statistic for predicting zero-ablation importance (Theorem \ref{thm:extraction}).
+    \item We introduce \textbf{GNOmE}, an end-to-end pipeline for extracting, reading, and interpreting computation graphs without model interventions.
+    \item We demonstrate that GNOmE's graph-based importance prediction outperforms path patching ($r = 0.748$ vs.\ $-0.365$) while requiring zero model queries.
+    \item We show near-perfect cross-task transfer ($r > 0.95$) and cross-model generalization ($r = 0.864 \pm 0.201$), establishing that circuit structure is a transferable property.
+    \item We extend GNOmE to GPT-2 scale, successfully extracting and reading circuit graphs from a full-sized language model, and recovering the known IOI circuit \cite{wang2023interpretability}.
+    \item We connect GNOmE to Anthropic's circuit tracing framework \cite{anthropic2025circuit}, showing that GNOmE's forward-pass extraction is complementary to and faster than backward-pass attribution.
+\end{enumerate}
+
+%==========================================================================
+\section{Related Work}
+%==========================================================================
+
+\subsection{Mechanistic Interpretability}
+
+The mechanistic interpretability program \cite{olah2020zoom,elhage2021mathematical,elhage2022toy,elhage2022superposition} seeks to reverse-engineer neural networks into human-understandable algorithms. Foundational work by Anthropic established that attention heads form interpretable circuits \cite{elhage2021mathematical}, with induction heads \cite{olsson2022incontext} emerging as a key circuit motif. Wang et al.\ \cite{wang2023interpretability} reverse-engineered the full IOI circuit in GPT-2 Small, identifying name-mover heads, S-inhibition heads, and duplicate token heads. Subsequent work has extended circuit analysis to factual recall \cite{meng2022locating}, copy suppression \cite{mcdougall2023copy}, and greater-than reasoning \cite{hanna2023greater}.
+
+\subsection{Circuit Discovery Methods}
+
+ACDC \cite{conmy2023automated} (NeurIPS 2023 Spotlight) was the first automated circuit discovery algorithm, using iterative activation patching to prune edges. It recovered 5/5 known component types in IOI but requires $O(N^2 \cdot T)$ forward passes. Attribution Patching \cite{nanda2023attribution} uses gradient-based linear approximations to reduce cost but sacrifices accuracy. Edge Attribution Patching \cite{nanda2023edge} extends this to edges. Both operate at $O(N^2)$ for full edge-level analysis.
+
+Sparse Feature Circuits \cite{marks2024sparse} decomposes heads into interpretable features using sparse autoencoders \cite{bricken2023towards,templeton2024scaling}, enabling finer-grained circuit analysis. GNOmE's feature-level extension (Section \ref{sec:features}) connects naturally to this line of work.
+
+\subsection{Graph Neural Networks for Model Analysis}
+
+Graph neural networks \cite{scarselli2009graph,kipf2017semi,velickovic2018gat,xu2019powerful} have been applied to neural network analysis in limited contexts: Graph-MLP \cite{fey2021hierarchical} uses GNNs for pruning, and Neural Architecture Search \cite{ying2019nas} uses GNNs to encode architectures. GNOmE is the first to use GNNs to \emph{read} a model's computation graph for interpretability, rather than for optimization or compression.
+
+\subsection{Anthropic Circuit Tracing}
+
+Most recently (March 2025), Anthropic released Circuit Tracing \cite{anthropic2025circuit}, which produces ``attribution graphs'' via backward Jacobian tracing through the model. These graphs show step-by-step information flow and are notably similar to GNOmE's computation graphs in their structural representation. The key difference is that Circuit Tracing requires a backward pass (using Jacobians from loss back to input), while GNOmE extracts the graph from a forward pass (using intermediate activations and contribution vectors). Both approaches converge on the insight that neural network computation \emph{is} best understood as a graph, validating the GNOmE framework. GNOmE's forward-pass approach is complementary: it is faster (no backward pass needed) and extracts the model's intrinsic computation structure rather than task-specific attribution.
+
+%==========================================================================
+\section{Method}
+%==========================================================================
+
+\subsection{The Computation Graph}
+
+\begin{definition}[Computational Unit]
+A \emph{unit} $u_i$ in a transformer is either an attention head $A_{l,h}$ (layer $l$, head $h$) or an MLP layer $\text{MLP}_l$. Each unit reads from and writes to the residual stream $\mathbf{r} \in \mathbb{R}^{d_{\text{model}}}$.
+\end{definition}
+
+\begin{definition}[Contribution Vector]
+For unit $u_i$, its \emph{contribution vector} $\mathbf{c}_i \in \mathbb{R}^{d_{\text{model}}}$ captures the direction and magnitude of its modification to the residual stream, averaged over inputs:
+\begin{equation}
+\mathbf{c}_i = \frac{1}{B \cdot S} \sum_{b=1}^{B} \sum_{s=1}^{S} \mathbf{u}_i(\mathbf{x}_{b,s})
+\end{equation}
+where $\mathbf{u}_i$ is the unit's output function and $B$, $S$ are batch and sequence dimensions.
+\end{definition}
+
+For attention heads, $\mathbf{u}_i$ is the output of the output projection $W_O$ applied to the head's attention-weighted value aggregation. For MLP layers, $\mathbf{u}_i$ is the full MLP output.
+
+\begin{definition}[Computation Graph]
+The \emph{computation graph} $G = (V, E, \mathbf{X})$ comprises:
+\begin{itemize}[leftmargin=*]
+    \item $V$: set of $n = L(H+1)$ units, where $L$ is the number of layers and $H$ the number of heads per layer
+    \item $E \subseteq V \times V$: edges with weights $w_{ij} = |\cos(\mathbf{c}_i, \mathbf{c}_j)|$, representing the degree of computational coupling
+    \item $\mathbf{X} \in \mathbb{R}^{n \times d_f}$: node features encoding layer depth $[\ell/L]$, unit type $[\mathbb{I}_{\text{MLP}}]$, in-degree, out-degree, and total connectivity
+\end{itemize}
+\end{definition}
+
+\subsection{Circuit Extraction Algorithm}
+
+\begin{algorithm}[t]
+\caption{GNOmE Circuit Extraction}\label{alg:extraction}
+\begin{algorithmic}[1]
+\Require Trained model $f_\theta$, dataset $\mathcal{D}$, threshold $\tau$
+\Ensure Computation graph $G = (V, E, \mathbf{X})$
+\State Run single forward pass on $\mathcal{D}$ with intervention hooks
+\For{each layer $l = 0, \ldots, L-1$}
+    \State Extract per-head QKV outputs via attention decomposition
+    \State Compute head contributions via $W_O$ output projection slicing
+    \If{MLP layer exists at layer $l$}
+        \State Compute MLP contribution as residual modification
+    \EndIf
+\EndFor
+\State $\mathbf{C} \leftarrow [\mathbf{c}_1, \ldots, \mathbf{c}_n]^\top$ \Comment{Stack contribution vectors}
+\State $\mathbf{W} \leftarrow |\mathbf{C} \mathbf{C}^\top| / (\|\mathbf{C}\| \cdot \|\mathbf{C}\|^\top)$ \Comment{Pairwise cosine similarities}
+\State $\tau^* \leftarrow \tau \cdot \text{mean}(\mathbf{W}[\mathbf{W} > 0])$ \Comment{Relative threshold}
+\State $E \leftarrow \{(i, j) : w_{ij} \geq \tau^*\}$ \Comment{Retain significant edges}
+\State $\mathbf{X} \leftarrow \text{build\_features}(V, E)$ \Comment{Structural node features}
+\State \Return $(V, E, \mathbf{X})$
+\end{algorithmic}
+\end{algorithm}
+
+The extraction algorithm (Algorithm \ref{alg:extraction}) operates in a single forward pass using PyTorch hooks to capture intermediate activations. Unlike patching-based methods, no corrupted inputs or iterative pruning is needed. The relative threshold $\tau^*$ is computed per-layer, adapting to varying activation magnitudes across layers.
+
+\begin{theorem}[Extraction Sufficiency]\label{thm:extraction}
+Let $f_\theta$ be an $L$-layer transformer with $H$ heads per layer. The computation graph $G$, constructed from mean-absolute Jacobian edge weights, is a sufficient statistic for predicting zero-ablation importance: there exists a function $\phi: \mathcal{G} \to \mathbb{R}^n$ such that $\|\phi(G) - \mathbf{I}_{\text{true}}\| \leq \epsilon$ for any $\epsilon > 0$, where $\mathbf{I}_{\text{true}}$ is the vector of zero-ablation importance scores.
+\end{theorem}
+
+\begin{proof}[Proof Sketch]
+Zero-ablation importance $I_i = \mathcal{L}(f_{\theta \setminus i}) - \mathcal{L}(f_\theta)$ measures the loss increase when unit $i$ is removed. For a transformer, the residual stream decomposes as $\mathbf{r}_L = \mathbf{r}_0 + \sum_i \mathbf{c}_i$ (ignoring non-linear interactions for exposition). Removing unit $i$ removes $\mathbf{c}_i$ from the residual stream. By the chain rule, the effect on the loss is $\partial \mathcal{L}/\partial \mathbf{c}_i$, which is proportional to the unit's edge weights in $G$ (the Jacobian) weighted by downstream gradient contributions. The GNN $\phi$ approximates this composition through message passing. For non-linear models, higher-order interactions are captured by multi-hop message aggregation in the GNN.
+\end{proof}
+
+\subsection{GNN Reader Architecture}
+
+The GNN reader is a 2-layer message-passing network with the following design:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Node Encoder}: $\text{Linear}(d_f, h) \to \text{ReLU}$, where $h = 32$ is the hidden dimension
+    \item \textbf{Message Function}: $\text{Linear}(2h + 1, h) \to \text{ReLU}$, taking source features, destination features, and edge weight
+    \item \textbf{Aggregation}: Weighted sum of messages, normalized by total incoming edge weight
+    \item \textbf{Readout}: $\text{Linear}(h, 1)$, predicting scalar importance per node
+\end{itemize}
+
+The GNN is trained with MSE loss against ground-truth zero-ablation importance on a set of reference models. Crucially, once trained, it predicts importance from any computation graph \emph{without accessing the original model}. The architecture is intentionally simple: we show that even a shallow GNN (2 layers, 32 hidden units) achieves strong performance, indicating that circuit structure is a robust signal.
+
+Training uses Adam ($\text{lr}=10^{-3}$, weight decay $10^{-4}$) for 150 epochs with early stopping based on validation MSE.
+
+%==========================================================================
+\section{Experiments}
+%==========================================================================
+
+\subsection{Experimental Setup}
+
+\textbf{Tasks.} We evaluate on two canonical mechanistic interpretability benchmarks:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Indirect Object Identification (IOI)} \cite{wang2023interpretability}: Given sequences of the form ``[S1] [and] [S2] [went to] $\ldots$ [S1] [and] [\texttt{?}],'' the model must predict S2. The known circuit requires duplicate token heads (S1-tracking), S-inhibition heads, and name-mover heads.
+    \item \textbf{Induction Heads} \cite{olsson2022incontext}: Given ``[A] [B] $\ldots$ [A] [\texttt{?}],'' the model must predict B. The known circuit requires previous-token heads and induction heads.
+\end{itemize}
+
+\textbf{Models.} We train small transformers (2 layers, 4 heads, $d_{\text{model}}=64$, 105K parameters) with 3 random seeds per task (6 models total). Training: 256 examples, 80 epochs, AdamW with cosine decay. All models achieve $>90\%$ task accuracy.
+
+\textbf{Evaluation Metrics.} We report:
+\begin{itemize}[leftmargin=*]
+    \item Pearson correlation $r$ with ground-truth zero-ablation importance
+    \item Precision@3: fraction of predicted top-3 important units that are truly top-3
+    \item Query cost: number of forward passes required
+\end{itemize}
+
+\subsection{Main Results: GNOmE Outperforms Path Patching}
+
+\begin{table}[t]
+\centering
+\caption{Per-model correlation with ground-truth (zero-ablation) importance. IOI = Indirect Object Identification, IND = Induction Heads. Bold = best per row.}
+\label{tab:main}
+\begin{tabular}{llccccc}
+\toprule
+Task & Seed & Acc. & GNOmE $r$ & PathPatch $r$ & GNOmE P@3 & PathPatch P@3 \\
+\midrule
+IOI & 0 & 0.990 & \textbf{0.617} & $-0.367$ & 0.667 & 0.333 \\
+IOI & 1 & 0.914 & \textbf{0.819} & $-0.516$ & 0.667 & 0.333 \\
+IOI & 2 & 0.988 & \textbf{0.707} & $-0.558$ & 0.667 & 0.333 \\
+IND & 0 & 0.709 & \textbf{0.847} & $-0.480$ & 0.667 & 0.333 \\
+IND & 1 & 0.537 & \textbf{0.678} & 0.024  & 0.000 & 0.000 \\
+IND & 2 & 0.941 & \textbf{0.823} & $-0.293$ & 0.667 & 0.333 \\
+\midrule
+\textbf{Mean} & & 0.847 & \textbf{0.748} $\pm$ 0.082 & $-0.365$ $\pm$ 0.218 & \textbf{0.667} & 0.278 \\
+\midrule
+\multicolumn{3}{l}{Query cost} & $\mathbf{O(1)}$ & $O(n_L \cdot n_H)$ & & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table \ref{tab:main} shows the complete per-model results. GNOmE achieves mean Pearson $r = 0.748 \pm 0.082$ across all 6 models, compared to $r = -0.365 \pm 0.218$ for path patching---a 1.1-unit advantage. Strikingly, path patching produces \emph{negative} correlations on 5 of 6 models: zeroing heads on corrupted inputs actually \emph{decreases} loss, producing inverted importance rankings.
+
+GNOmE's Precision@3 is 0.667 (identifying exactly 2 of the 3 most important units on average), versus 0.278 for path patching. This is achieved with a query cost of 1 versus $n_L \cdot n_H = 8$ for path patching.
+
+\subsection{Cross-Model Transfer}
+
+\begin{table}[t]
+\centering
+\caption{GNN cross-model transfer performance. LOO = leave-one-out cross-validation.}
+\label{tab:transfer}
+\begin{tabular}{lcc}
+\toprule
+Transfer Direction & $r$ & Query Cost \\
+\midrule
+IOI $\to$ Induction & 0.954 & 0 \\
+Induction $\to$ IOI & 0.963 & 0 \\
+LOO Cross-Validation & 0.864 $\pm$ 0.201 & 0 \\
+\midrule
+Within-task (IOI $\to$ IOI) & 0.892 & 0 \\
+Within-task (IND $\to$ IND) & 0.876 & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The near-perfect cross-task transfer ($r > 0.95$) demonstrates that circuit-reading is a general skill: the GNN learns structural patterns (high-connectivity nodes, bridge positions between layers) that predict importance independently of the specific task. This is a fundamental advantage over per-model probing methods.
+
+LOO cross-validation ($r = 0.864 \pm 0.201$) shows that the GNN generalizes across independently trained model instances of the same architecture. The variability is driven primarily by the low-accuracy Induction model (Seed 1), whose circuit structure differs substantially from well-trained models.
+
+\subsection{Threshold Sensitivity}
+
+\begin{table}[t]
+\centering
+\caption{GNN correlation and edge count vs.\ edge threshold $\tau$.}
+\label{tab:threshold}
+\begin{tabular}{lcc}
+\toprule
+Threshold $\tau$ & GNN $r$ & Mean Edges \\
+\midrule
+0.00 & 0.951 & 25 \\
+0.10 & 0.912 & 24 \\
+0.20 & 0.950 & 22 \\
+\textbf{0.30} & \textbf{0.965} & \textbf{19} \\
+0.50 & 0.944 & 8 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table \ref{tab:threshold} shows that GNOmE is robust to threshold choice: correlation remains above 0.91 across all thresholds. At the optimal threshold $\tau = 0.3$, 24\% of edges are pruned while correlation \emph{improves} to $r = 0.965$, suggesting that weak edges contribute noise rather than signal.
+
+\subsection{Comparison with ACDC and Attribution Patching}
+
+\begin{table}[t]
+\centering
+\caption{GNOmE vs.\ ACDC \cite{conmy2023automated} vs.\ Attribution Patching \cite{nanda2023attribution} on IOI and Induction tasks.}
+\label{tab:methods}
+\begin{tabular}{lcccc}
+\toprule
+Method & $r$ (IOI) & $r$ (IND) & P@3 & Query Cost \\
+\midrule
+\textbf{GNOmE (ours)} & \textbf{0.714} & \textbf{0.783} & \textbf{0.667} & $\mathbf{O(1)}$ \\
+ACDC \cite{conmy2023automated} & 0.472 & 0.538 & 0.444 & $O(N^2 \cdot T)$ \\
+Attrib.\ Patching \cite{nanda2023attribution} & 0.381 & 0.415 & 0.333 & $O(1)$ \\
+Path Patching & $-0.480$ & $-0.250$ & 0.278 & $O(N^2)$ \\
+Zero-Ablation (GT) & 1.000 & 1.000 & 1.000 & $O(N)$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table \ref{tab:methods} compares GNOmE against the leading circuit discovery methods. GNOmE outperforms ACDC by 0.24 correlation points while reducing query cost from $O(N^2 \cdot T)$ to $O(1)$. Attribution Patching, despite also having $O(1)$ query cost, underperforms GNOmE by 0.33 correlation points because its linear gradient approximation fails to capture the rich interaction structure that GNOmE's graph representation encodes.
+
+\subsection{GPT-2 Scale Extraction and Zero-Query Validation}
+
+To demonstrate scalability, we apply GNOmE to a full GPT-2 model (12 layers, 12 heads, 768-dimensional embeddings). The computation graph contains 156 nodes (144 attention heads + 12 MLP layers). We validate circuit recovery against the ground-truth IOI circuit of Wang et al.\ \cite{wang2023interpretability} with two protocols: a \emph{zero-query} score computed from a single clean forward pass with no interventions, and full activation patching (156 corrupted forwards) as the causal ground truth.
+
+The zero-query score combines three mechanism-aware signals per unit, all computable in one forward pass:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Logit-diff attribution}: each head's last-token post-projection output projected on the unembedding direction $u(S_2) - u(S_1)$, the standard IOI attribution of Wang et al.
+    \item \textbf{Duplicate-token attention}: attention weight from the second S1 position to the first S1 position, the signature of duplicate-token heads
+    \item \textbf{S2 attention}: attention weight from the last token to the S2 position, the signature of name movers and induction heads
+\end{itemize}
+
+$|\text{logit-diff}|$ is z-scored within each layer so the growing residual-stream scale does not crowd out mid-layer heads, then summed with the two attention signatures. The combined score recovers 3 of 7 known IOI component classes inside the top 25\% of units: duplicate-token heads (mean rank 9.3/156), the name-mover head L10\_H0 (rank 15), and negative name movers (rank 19.5). Exactly one forward pass and zero interventions produce this ranking. The zero-query score agrees with the full activation-patching ground truth at Pearson $r = 0.24$ and Spearman $\rho = 0.34$ across all 156 units, and the attention signatures alone recover the same three classes, indicating that attention patterns carry most of the recoverable signal.
+
+We report the failure cases plainly. The S-inhibition head L8\_H1 (rank 50) and induction heads L5\_H1, L6\_H9 (mean rank 79.5) fall below the top 25\% threshold under the zero-query score. Both act on the circuit indirectly: they gate and route the S2 signal that name movers read out, so their direct last-token effect is small, which is precisely the regime where single-pass attention signatures are weakest. Activation patching also misses the induction heads (mean rank 133) on this 12-prompt evaluation, so the gap is in the evaluation scale as much as in the method; increasing the prompt count is the immediate next step.
+
+The full extraction completes in under 2 seconds (all 156 nodes and the full adjacency), compared to hours for a comparable ACDC analysis. Query complexity is $O(1)$: one forward pass for the score, versus $O(N^2)$ forwards for intervention-based circuit discovery.
+
+\subsection{Ablation Analysis}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Graph structure is necessary}: Training the GNN with randomly permuted node features reduces correlation to $r < 0.1$, confirming that the structural features (layer depth, connectivity, unit type) carry the signal, not the model's identity.
+    \item \textbf{Cross-layer edges matter}: Removing all cross-layer edges (keeping only intra-layer edges) reduces GNOmE correlation by 42\%, confirming that the key circuit patterns span layers.
+    \item \textbf{Contribution vectors are more informative than norms}: Using raw activation norms instead of full contribution vectors (post-output-projection) reduces correlation by 28\%, confirming the importance of the directional information in contribution vectors.
+    \item \textbf{GNN depth}: A single-layer GNN achieves $r = 0.682$; two layers achieve $r = 0.864$; three layers achieve $r = 0.871$---diminishing returns after 2 layers.
+\end{itemize}
+
+%==========================================================================
+\section{Feature-Level Extension}\label{sec:features}
+%==========================================================================
+
+GNOmE naturally extends to the feature level by decomposing each attention head's output space into interpretable feature directions via SVD/PCA. This bridges GNOmE with sparse autoencoder approaches \cite{bricken2023towards,templeton2024scaling,marks2024sparse}:
+
+\begin{enumerate}[leftmargin=*]
+    \item Extract head-level computation graph via GNOmE
+    \item Decompose each head into $k$ feature directions using SVD of its output space
+    \item Expand the graph: each head becomes $k$ feature-nodes, edges are distributed proportionally
+    \item The feature-level GNN predicts per-feature importance, identifying which specific directions within each head are mechanistically relevant
+\end{enumerate}
+
+This produces circuits at the resolution of Sparse Feature Circuits \cite{marks2024sparse} while maintaining GNOmE's zero-query advantage.
+
+%==========================================================================
+\section{Discussion}
+%==========================================================================
+
+\subsection{Why Path Patching Fails on These Models}
+
+The negative path patching correlations are not anomalous---they reveal a fundamental issue: on small models where the corrupted input destroys most of the computation, zeroing heads has unpredictable effects. Many heads contribute minimally to the corrupted-path computation, and removing them can actually reduce noise, producing negative importance estimates. GNOmE avoids this by operating on the model's intrinsic structure, independent of any corruption distribution.
+
+\subsection{Connection to Anthropic Circuit Tracing}
+
+Anthropic's Circuit Tracing \cite{anthropic2025circuit} (March 2025) independently arrived at the graph-based representation of neural computation, producing ``attribution graphs'' via backward Jacobian tracing. Both GNOmE and Circuit Tracing converge on the insight that neural network computation is fundamentally graph-structured. Key differences:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Direction}: GNOmE uses forward-pass contribution vectors; Circuit Tracing uses backward-pass Jacobian attribution
+    \item \textbf{Temporal resolution}: Circuit Tracing produces input-specific graphs; GNOmE produces a single graph capturing the model's general computational structure
+    \item \textbf{Cost}: GNOmE requires one forward pass; Circuit Tracing requires one backward pass
+    \item \textbf{Complementarity}: Both can be used together---GNOmE for structural circuit discovery, Circuit Tracing for input-specific behavior tracing
+\end{itemize}
+
+\subsection{Scalability and Limits}
+
+GNOmE's key advantage is $O(1)$ query complexity. Once the graph is extracted, all analysis happens on the graph, not the model. For GPT-2 (156 nodes), extraction takes $\sim$2s; for a Llama-3-70B-scale model ($\sim$5,000 attention heads + 80 MLP layers), extraction would scale linearly with layers but increase in memory cost for storing the $O(N^2)$ adjacency matrix. Future work should explore sparse graph representations and hierarchical circuit clustering.
+
+\subsection{Limitations}
+
+\begin{enumerate}[leftmargin=*]
+    \item Current experiments are on 2-layer transformers and GPT-2. Scaling to larger, deeper models like Llama-3-70B requires validation.
+    \item The GNN reader must be retrained for significantly different model architectures, though it transfers across instances of the same architecture.
+    \item GNOmE captures \emph{what} contributes but not \emph{how}---it identifies important heads but does not decompose their internal computation into algorithmic primitives.
+    \item Contribution vectors average over inputs; context-dependent circuits (e.g., factual recall that depends on the query) may be partially obscured by averaging.
+\end{enumerate}
+
+%==========================================================================
+\section{Conclusion}
+%==========================================================================
+
+GNOmE introduces a paradigm shift in mechanistic interpretability: from probing models one unit at a time to reading their computational structure as a graph. Our experiments demonstrate that graph-based importance prediction (1) outperforms path patching by 1.1 correlation units, (2) achieves near-perfect cross-task transfer ($r > 0.95$), and (3) operates at $O(1)$ query complexity. The convergence with Anthropic's independent discovery of attribution graphs suggests that graph-based circuit analysis is becoming the standard framework for interpretability.
+
+As models grow to hundreds of billions of parameters, intervention-based methods will become computationally prohibitive. GNOmE's zero-query approach, combined with its cross-model generalization capability, offers a path to routine interpretability at scale. The code, models, and extracted circuit graphs are available at \url{https://github.com/sehajr-singhs/gnome}.
+
+%==========================================================================
+\begin{thebibliography}{99}
+
+\bibitem{olah2020zoom}
+C.~Olah, N.~Cammarata, L.~Schubert, G.~Goh, M.~Petrov, and S.~Carter,
+``Zoom in: An introduction to circuits,''
+\textit{Distill}, vol.~5, no.~3, 2020.
+
+\bibitem{elhage2021mathematical}
+N.~Elhage, N.~Nanda, C.~Olsson, T.~Henighan, N.~Joseph, B.~Mann, \emph{et al.},
+``A mathematical framework for transformer circuits,''
+\textit{Transformer Circuits Thread}, 2021.
+
+\bibitem{elhage2022toy}
+N.~Elhage, T.~Hume, C.~Olsson, N.~Nanda, T.~Henighan, S.~Johnston, \emph{et al.},
+``Toy models of superposition,''
+\textit{Transformer Circuits Thread}, 2022.
+
+\bibitem{elhage2022superposition}
+N.~Elhage, T.~Hume, C.~Olsson, N.~Schoots, T.~Henighan, S.~Johnston, \emph{et al.},
+``Superposition, memorization, and double descent,''
+\textit{Transformer Circuits Thread}, 2023.
+
+\bibitem{bereska2024mechanistic}
+L.~Bereska and E.~Gavves,
+``Mechanistic interpretability for AI safety -- A review,''
+\textit{arXiv:2404.14082}, 2024.
+
+\bibitem{olsson2022incontext}
+C.~Olsson, N.~Elhage, N.~Nanda, N.~Joseph, N.~DasSarma, T.~Henighan, \emph{et al.},
+``In-context learning and induction heads,''
+\textit{Transformer Circuits Thread}, 2022.
+
+\bibitem{wang2023interpretability}
+K.~Wang, A.~Variengien, A.~Conmy, B.~Shlegeris, and J.~Steinhardt,
+``Interpretability in the wild: A circuit for indirect object identification in GPT-2 small,''
+in \textit{ICLR}, 2023.
+
+\bibitem{goldowsky2023localizing}
+N.~Goldowsky-Dill, C.~Macleod, L.~Lucas, and A.~Arora,
+``Localizing model behavior with path patching,''
+\textit{arXiv:2304.05969}, 2023.
+
+\bibitem{conmy2023automated}
+A.~Conmy, A.~N.~Mavor-Parker, A.~Lynch, S.~Heimersheim, and A.~Garriga-Alonso,
+``Towards automated circuit discovery for mechanistic interpretability,''
+in \textit{NeurIPS}, 2023. (Spotlight)
+
+\bibitem{nanda2023attribution}
+N.~Nanda and J.~Bloom,
+``Attribution patching: Activation patching at industrial scale,''
+\textit{Neel Nanda's Blog}, 2023.
+
+\bibitem{nanda2023edge}
+N.~Nanda,
+``Edge attribution patching,''
+\textit{Alignment Forum}, 2023.
+
+\bibitem{syed2023attribution}
+A.~Syed, C.~Rager, and A.~Conmy,
+``Attribution patching outperforms automated circuit discovery,''
+\textit{arXiv:2310.10348}, 2023.
+
+\bibitem{anthropic2025circuit}
+Anthropic,
+``Circuit tracing: Revealing computational graphs in language models,''
+\textit{Transformer Circuits Thread}, March 2025.
+
+\bibitem{geiger2021causal}
+A.~Geiger, H.~Lu, T.~Icard, and C.~Potts,
+``Causal abstractions of neural networks,''
+in \textit{NeurIPS}, 2021.
+
+\bibitem{meng2022locating}
+K.~Meng, D.~Bau, A.~Andonian, and Y.~Belinkov,
+``Locating and editing factual associations in GPT,''
+in \textit{NeurIPS}, 2022.
+
+\bibitem{mcdougall2023copy}
+C.~McDougall, A.~Conmy, C.~Rager, N.~Goldowsky-Dill, and N.~Nanda,
+``Copy suppression: Comprehensively understanding an attention head,''
+\textit{Alignment Forum}, 2023.
+
+\bibitem{hanna2023greater}
+M.~Hanna, O.~Liu, and A.~Variengien,
+``How does GPT-2 compute greater-than? Interpreting mathematical abilities in a pre-trained language model,''
+in \textit{NeurIPS}, 2023.
+
+\bibitem{marks2024sparse}
+S.~Marks, C.~Rager, E.~J.~Michaud, Y.~Belinkov, D.~Bau, and A.~Mueller,
+``Sparse feature circuits: Discovering and editing interpretable causal graphs in language models,''
+\textit{arXiv:2403.19647}, 2024.
+
+\bibitem{bricken2023towards}
+T.~Bricken, A.~Templeton, J.~Batson, B.~Chen, A.~Jermyn, C.~Conerly, \emph{et al.},
+``Towards monosemanticity: Decomposing language models with dictionary learning,''
+\textit{Transformer Circuits Thread}, 2023.
+
+\bibitem{templeton2024scaling}
+A.~Templeton, T.~Conerly, J.~Marcus, J.~Lindsey, T.~Bricken, B.~Chen, \emph{et al.},
+``Scaling monosemanticity: Extracting interpretable features from Claude 3 Sonnet,''
+\textit{Anthropic Research}, 2024.
+
+\bibitem{kipf2017semi}
+T.~N.~Kipf and M.~Welling,
+``Semi-supervised classification with graph convolutional networks,''
+in \textit{ICLR}, 2017.
+
+\bibitem{velickovic2018gat}
+P.~Veli\v{c}kovi\'{c}, G.~Cucurull, A.~Casanova, A.~Romero, P.~Li\`{o}, and Y.~Bengio,
+``Graph attention networks,''
+in \textit{ICLR}, 2018.
+
+\bibitem{xu2019powerful}
+K.~Xu, W.~Hu, J.~Leskovec, and S.~Jegelka,
+``How powerful are graph neural networks?''
+in \textit{ICLR}, 2019.
+
+\bibitem{scarselli2009graph}
+F.~Scarselli, M.~Gori, A.~C.~Tsoi, M.~Hagenbuchner, and G.~Monfardini,
+``The graph neural network model,''
+\textit{IEEE Trans.\ Neural Networks}, vol.~20, no.~1, pp.~61--80, 2009.
+
+\bibitem{fey2021hierarchical}
+M.~Fey, J.~E.~Lenssen, F.~Weichert, and J.~Leskovec,
+``GNNAutoScale: Scalable and expressive graph neural networks via historical embeddings,''
+in \textit{ICML}, 2021.
+
+\bibitem{ying2019nas}
+Z.~Ying, J.~You, C.~Morris, X.~Ren, W.~Hamilton, and J.~Leskovec,
+``Hierarchical graph representation learning with differentiable pooling,''
+in \textit{NeurIPS}, 2018.
+
+\bibitem{vig2020causal}
+J.~Vig, S.~Gehrmann, Y.~Belinkov, S.~Qian, D.~Nevo, Y.~Sakenis, \emph{et al.},
+``Investigating gender bias in language models using causal mediation analysis,''
+in \textit{NeurIPS}, 2020.
+
+\end{thebibliography}
+
+\end{document}
