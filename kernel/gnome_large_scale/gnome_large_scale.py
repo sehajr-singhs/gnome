@@ -13,13 +13,10 @@ for rel, txt in files.items():
 print("unpacked", len(files), "files", flush=True)
 
 import subprocess as _sp
-_sp.run([sys.executable, "-m", "pip", "install", "--quiet",
-         "torch==2.5.1", "--index-url", "https://download.pytorch.org/whl/cu121"],
-        check=True)
-print("torch reinstalled for cu121", flush=True)
+print("using pre-installed torch (no pip install)", flush=True)
 
 import torch
-print("torch", torch.__version__, "cuda", torch.cuda.is_available(), flush=True)
+print("torch", torch.__version__, "cuda", torch.cuda.is_available(), "device count:", torch.cuda.device_count(), flush=True)
 
 env = dict(os.environ, PYTHONPATH=str(SRCDIR), OMP_NUM_THREADS="2", MKL_NUM_THREADS="2")
 cmd = [sys.executable, str(SRCDIR / "exp/gnome_large_scale.py")] + ARGS
