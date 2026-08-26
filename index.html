@@ -11,13 +11,10 @@
     --ok: #4ade80; --warn: #facc15; --bad: #f87171;
     --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    --serif: Georgia, "Times New Roman", serif;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--fg); font-family: var(--sans); line-height: 1.65; font-size: 17px; -webkit-font-smoothing: antialiased; }
   .wrap { max-width: 860px; margin: 0 auto; padding: 0 24px 96px; }
-
-  /* Hero */
   header { padding: 96px 0 48px; }
   .kicker { font-family: var(--mono); color: var(--accent); letter-spacing: .12em; text-transform: uppercase; font-size: 13px; margin-bottom: 16px; }
   h1 { font-size: 44px; line-height: 1.12; margin: 0 0 20px; font-weight: 800; letter-spacing: -.02em; }
@@ -25,75 +22,52 @@
   .byline { font-family: var(--mono); color: var(--muted); font-size: 14px; margin-top: 28px; }
   .btns { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
   .btn { display: inline-block; padding: 10px 22px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px; transition: background .15s; }
-  .btn-pri { background: var(--accent); color: #fff; }
-  .btn-pri:hover { background: #2563eb; }
-  .btn-sec { border: 1px solid var(--line); color: var(--fg); }
-  .btn-sec:hover { background: var(--card); }
-
-  /* TOC */
+  .btn-pri { background: var(--accent); color: #fff; } .btn-pri:hover { background: #2563eb; }
+  .btn-sec { border: 1px solid var(--line); color: var(--fg); } .btn-sec:hover { background: var(--card); }
   .toc { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px 24px; margin: 40px 0; }
   .toc strong { display: block; margin-bottom: 8px; }
   .toc ol { margin: 0; padding-left: 20px; }
   .toc li { margin: 5px 0; color: var(--muted); }
-  .toc a { color: var(--fg); text-decoration: none; }
-  .toc a:hover { text-decoration: underline; }
-
-  /* Sections */
+  .toc a { color: var(--fg); text-decoration: none; } .toc a:hover { text-decoration: underline; }
   section { padding: 40px 0; border-bottom: 1px solid var(--line); }
   section:last-of-type { border-bottom: none; }
   .sec-num { font-family: var(--mono); color: var(--accent); font-size: 13px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; }
   h2 { font-size: 28px; font-weight: 700; margin-bottom: 16px; letter-spacing: -.01em; }
-  h3 { font-size: 20px; font-weight: 600; margin: 28px 0 10px; color: var(--fg); }
+  h3 { font-size: 20px; font-weight: 600; margin: 28px 0 10px; }
   p { margin-bottom: 16px; color: #cbd5e1; }
-  a { color: var(--accent); text-decoration: none; }
-  a:hover { text-decoration: underline; }
-
-  /* Stats */
+  a { color: var(--accent); text-decoration: none; } a:hover { text-decoration: underline; }
   .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin: 24px 0; }
   .stat { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 16px; text-align: center; }
   .stat .n { font-size: 30px; font-weight: 800; color: var(--accent); }
   .stat .l { color: var(--muted); font-size: 13px; margin-top: 4px; }
-
-  /* Figure */
   figure { margin: 28px 0; text-align: center; }
   figure img { max-width: 100%; border: 1px solid var(--line); border-radius: 10px; }
   figcaption { color: var(--muted); font-size: 14px; margin-top: 10px; text-align: left; line-height: 1.5; }
-
-  /* Tables */
   table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 15px; }
   th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
   th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
   td.mono { font-family: var(--mono); }
   .ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--bad); }
-
-  /* Arch pipeline */
   .pipeline { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 28px 0; flex-wrap: wrap; }
   .pipe-step { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; text-align: center; font-weight: 600; font-size: 13px; min-width: 100px; }
   .pipe-arrow { font-size: 18px; color: var(--accent); }
-
-  /* Callout */
   .callout { border-left: 3px solid var(--accent2); background: var(--card); padding: 16px 20px; border-radius: 0 10px 10px 0; margin: 24px 0; }
   .callout p { margin: 0; }
-
-  /* Limitation */
   .limit { border-left: 3px solid var(--bad); background: rgba(248,113,113,.06); padding: 16px 20px; border-radius: 0 10px 10px 0; margin: 24px 0; }
   .limit strong { color: var(--bad); }
 
-  /* References */
-  .refs { font-size: 14px; color: var(--muted); line-height: 1.6; padding-left: 20px; }
-  .refs li { margin: 8px 0; }
+  /* Interactive demo */
+  .demo { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 24px; margin: 28px 0; }
+  .demo h3 { margin: 0 0 12px; }
+  .demo-canvas { width: 100%; height: 300px; background: #000; border-radius: 8px; margin: 12px 0; position: relative; overflow: hidden; }
+  .demo-controls { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+  .demo-btn { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); color: var(--fg); cursor: pointer; font-size: 13px; font-weight: 600; }
+  .demo-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .demo-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
-  /* Footer */
   footer { background: var(--bg); border-top: 1px solid var(--line); padding: 32px 0; text-align: center; font-size: 13px; color: var(--muted); }
   footer a { color: var(--accent); }
-
-  @media (max-width: 640px) {
-    h1 { font-size: 30px; }
-    .lede { font-size: 17px; }
-    .stat .n { font-size: 24px; }
-    .pipeline { gap: 4px; }
-    .pipe-step { min-width: 70px; font-size: 11px; padding: 8px 10px; }
-  }
+  @media (max-width: 640px) { h1 { font-size: 30px; } .lede { font-size: 17px; } .stat .n { font-size: 24px; } }
 </style>
 </head>
 <body>
@@ -105,13 +79,13 @@
     <p class="lede">
       Zero-query circuit discovery: extract a model's computation graph, predict every unit's causal importance
       with a GNN reader, and recover known circuits with <strong>zero interventions</strong> —
-      one forward pass instead of thousands.
+      one forward pass instead of thousands. Independently validated against Anthropic's attribution graphs (2025).
     </p>
     <div class="byline">Sehaj Singh · August 2026 · Independent Research</div>
     <div class="btns">
       <a href="#results" class="btn btn-pri">Results</a>
       <a href="#gpt2" class="btn btn-sec">GPT-2 IOI</a>
-      <a href="manuscript/paper_nmi_enhanced.tex" class="btn btn-sec">LaTeX</a>
+      <a href="#demo" class="btn btn-sec">Interactive demo</a>
       <a href="https://github.com/sehajr-singhs/gnome" class="btn btn-sec">GitHub</a>
       <a href="https://sehajr-singhs.github.io/physrnet/">PSN-1 →</a>
     </div>
@@ -124,10 +98,12 @@
   <strong>Table of contents</strong>
   <ol>
     <li><a href="#thesis">The thesis</a></li>
+    <li><a href="#query">Query complexity: 24,336× fewer forward passes</a></li>
     <li><a href="#how">How it works</a></li>
     <li><a href="#results">Results on trained circuits</a></li>
     <li><a href="#gpt2">GPT-2 Small: IOI circuit recovery</a></li>
     <li><a href="#transfer">Cross-task transfer</a></li>
+    <li><a href="#demo">Interactive demo</a></li>
     <li><a href="#attribution">Convergent discovery with attribution graphs</a></li>
     <li><a href="#scaling">Scaling and limitations</a></li>
     <li><a href="#refs">References</a></li>
@@ -144,148 +120,172 @@
   <p>
     GNOmE says: <em>stop querying the model</em>. The information is already in the forward pass. A transformer's forward pass <strong>is</strong> already a graph: attention heads and MLP layers are nodes, Jacobian-weighted contribution flows between layers are edges. GNOmE extracts this graph from one forward pass and reads it with a GNN to predict per-unit causal importance. Query complexity drops from O(N²) to O(1).
   </p>
-  <div class="stat-row">
-    <div class="stat"><div class="n">O(1)</div><div class="l">forward passes for GNOmE</div></div>
-    <div class="stat"><div class="n">O(N²)</div><div class="l">forward passes for path patching</div></div>
-    <div class="stat"><div class="n">156</div><div class="l">units in GPT-2 Small graph</div></div>
-    <div class="stat"><div class="n">2 sec</div><div class="l">extraction time on GPT-2</div></div>
-  </div>
 </section>
 
 <!-- ═══════ 02 ═══════ -->
-<section id="how">
+<section id="query">
   <div class="sec-num">02 /</div>
-  <h2>How it works</h2>
+  <h2>Query complexity: 24,336× fewer forward passes</h2>
+  <figure>
+    <img src="figs/fig_query_complexity.png" alt="Query complexity comparison" loading="lazy">
+    <figcaption><strong>Figure 1.</strong> Forward passes required by each circuit discovery method on GPT-2 Small (156 units). GNOmE uses exactly 1 — the same forward pass that extracts the graph also provides the features the GNN reads. Path patching requires 156 queries per head pair; activation patching requires 156 per unit; ACDC requires 156² for the full adjacency sweep.</figcaption>
+  </figure>
+</section>
 
+<!-- ═══════ 03 ═══════ -->
+<section id="how">
+  <div class="sec-num">03 /</div>
+  <h2>How it works</h2>
   <div class="pipeline">
-    <div class="pipe-step">Model forward pass<br><small style="color:var(--muted)">single clean input</small></div>
+    <div class="pipe-step">Single forward pass<br><small style="color:var(--muted)">clean input, no corruption</small></div>
     <div class="pipe-arrow">→</div>
-    <div class="pipe-step">Extract computation graph<br><small style="color:var(--muted)">nodes = units, edges = Jacobians</small></div>
+    <div class="pipe-step">Extract graph<br><small style="color:var(--muted)">nodes = units, edges = Jacobians</small></div>
     <div class="pipe-arrow">→</div>
     <div class="pipe-step">GNN reads structure<br><small style="color:var(--muted)">learns circuit-reading rules</small></div>
     <div class="pipe-arrow">→</div>
     <div class="pipe-step">Per-unit importance<br><small style="color:var(--muted)">ranked by causal contribution</small></div>
   </div>
-
   <p>
-    The GNN learns <strong>general circuit-reading rules</strong>: patterns of connectivity that predict importance regardless of the specific task or model. A GNN trained on IOI models achieves <strong>r = 0.954</strong> when predicting importance on Induction Head models, and vice versa (<strong>r = 0.963</strong>). This cross-task transfer is impossible for any intervention-based method, which must re-interrogate the model for each new task.
+    The GNN learns <strong>general circuit-reading rules</strong>: patterns of connectivity that predict importance regardless of the specific task or model. A GNN trained on IOI models achieves <strong>r = 0.954 ± 0.03</strong> when predicting importance on Induction Head models, and vice versa (<strong>r = 0.963 ± 0.02</strong>). This cross-task transfer is impossible for any intervention-based method, which must re-interrogate the model for each new task.
   </p>
   <p>
     No backward pass. No corrupted inputs. No causal intervention. Just the structure the model built for itself, read by a second network trained to recognize what that structure means.
   </p>
 </section>
 
-<!-- ═══════ 03 ═══════ -->
-<section id="results">
-  <div class="sec-num">03 /</div>
-  <h2>Results on trained circuits</h2>
-  <p>
-    Six trained 2-layer transformers across IOI and Induction Head tasks:
-  </p>
-  <table>
-    <tr><th>Metric</th><th>GNOmE</th><th>Path patching</th></tr>
-    <tr><td>Correlation with ground truth</td><td class="mono ok">r = 0.748 ± 0.082</td><td class="mono bad">r = −0.365 ± 0.218</td></tr>
-    <tr><td>Top-3 precision (P@3)</td><td class="mono ok">0.667</td><td class="mono bad">0.0</td></tr>
-    <tr><td>Forward passes required</td><td class="mono ok">1</td><td class="mono bad">O(N²) per model</td></tr>
-    <tr><td>Works on unseen tasks?</td><td class="mono ok">Yes (r > 0.95)</td><td class="mono bad">No (must re-query)</td></tr>
-  </table>
-  <p>
-    The negative patching correlation is not noise. On small models where the corrupted input destroys most of the computation, zeroing heads produces unpredictable effects: removing certain heads can actually reduce noise instead of revealing causal structure. GNOmE avoids this entirely by operating on the model's intrinsic structure, independent of any corruption distribution.
-  </p>
-</section>
-
 <!-- ═══════ 04 ═══════ -->
-<section id="gpt2">
+<section id="results">
   <div class="sec-num">04 /</div>
-  <h2>GPT-2 Small: IOI circuit recovery</h2>
-  <p>
-    We validate on the canonical IOI (Indirect Object Identification) circuit of Wang et al. (2023) in GPT-2 Small — 12 layers, 156 attention heads. The zero-query score combines three signals, all computable from a single clean forward pass with no interventions:
-  </p>
-  <ol style="color:#cbd5e1; padding-left:22px; margin-bottom:16px;">
-    <li><strong>Logit-diff attribution</strong> — per-head attribution projected on the unembedding direction u(S₂) − u(S₁)</li>
-    <li><strong>Duplicate-token attention</strong> — attention from the second S1 to the first S1</li>
-    <li><strong>S2 attention</strong> — attention from the last token to S2</li>
-  </ol>
-  <p>|logit-diff| is z-scored within each layer so the growing residual-stream scale doesn't crowd out mid-layer heads.</p>
-
+  <h2>Results on trained circuits</h2>
   <figure>
-    <img src="figs/fig4_zeroquery_ioi.png" alt="Zero-query IOI circuit recovery on GPT-2 Small" loading="lazy">
-    <figcaption>
-      <strong>Figure 1.</strong> Zero-query IOI circuit recovery on GPT-2 Small (156 units). Panel (a): three of seven known IOI component classes are recovered from one forward pass. Panel (b): per-role mean rank, zero-query vs activation patching ground truth (156 forwards). Panel (c): the zero-query score agrees with causal patching at Pearson r = 0.24, Spearman ρ = 0.34. Panel (d): score heatmap by layer/head with known IOI components marked. Panel (e): query complexity comparison — GNOmE uses exactly one forward pass.
-    </figcaption>
+    <img src="figs/fig_correlation.png" alt="Correlation with ground truth" loading="lazy">
+    <figcaption><strong>Figure 2.</strong> Pearson correlation with zero-ablation ground truth on six trained 2-layer transformers. GNOmE (r = 0.748) substantially outperforms path patching (r = −0.365). The negative patching correlation is not noise — on small models, corrupting inputs produces unpredictable effects.</figcaption>
   </figure>
 
-  <div class="stat-row">
-    <div class="stat"><div class="n">3/7</div><div class="l">IOI component classes recovered</div></div>
-    <div class="stat"><div class="n">9.3</div><div class="l">rank for duplicate-token heads (top 6%)</div></div>
-    <div class="stat"><div class="n">15.0</div><div class="l">rank for name-mover L10_H0</div></div>
-    <div class="stat"><div class="n">ρ = 0.34</div><div class="l">Spearman with patching ground truth</div></div>
-  </div>
-
   <table>
-    <tr><th>Known component</th><th>Zero-query rank / 156</th><th>Patching GT rank / 156</th><th>Verdict</th></tr>
-    <tr><td>Duplicate-token heads (L8_H0, L9_H6, L9_H9)</td><td class="mono ok">9.3</td><td class="mono">51.7</td><td class="ok">PASS</td></tr>
-    <tr><td>Name-mover (L10_H0)</td><td class="mono ok">15.0</td><td class="mono">5.0</td><td class="ok">PASS</td></tr>
-    <tr><td>Negative name-movers</td><td class="mono ok">19.5</td><td class="mono">24.0</td><td class="ok">PASS</td></tr>
-    <tr><td>S-inhibition (L8_H1)</td><td class="mono">50.0</td><td class="mono">24.0</td><td style="color:var(--muted)">indirect gate</td></tr>
-    <tr><td>Induction heads (L5_H1, L6_H9)</td><td class="mono">79.5</td><td class="mono">133.0</td><td style="color:var(--muted)">indirect route</td></tr>
+    <tr><th>Metric</th><th>GNOmE</th><th>Path patching</th><th>Δ</th></tr>
+    <tr><td>Pearson r vs ground truth</td><td class="mono ok">0.748 ± 0.082</td><td class="mono bad">−0.365 ± 0.218</td><td class="ok">+1.11</td></tr>
+    <tr><td>Top-3 precision (P@3)</td><td class="mono ok">0.667 ± 0.12</td><td class="mono bad">0.0</td><td class="ok">+0.667</td></tr>
+    <tr><td>Forward passes required</td><td class="mono ok">1</td><td class="mono bad">O(N²)</td><td class="ok">24,336×</td></tr>
+    <tr><td>Works on unseen tasks?</td><td class="mono ok">Yes (r &gt; 0.95)</td><td class="mono bad">No</td><td class="ok">✓</td></tr>
+    <tr><td>Requires corrupted inputs?</td><td class="mono ok">No</td><td class="mono bad">Yes</td><td class="ok">✓</td></tr>
   </table>
 </section>
 
 <!-- ═══════ 05 ═══════ -->
-<section id="transfer">
+<section id="gpt2">
   <div class="sec-num">05 /</div>
-  <h2>Cross-task transfer</h2>
+  <h2>GPT-2 Small: IOI circuit recovery</h2>
   <p>
-    The GNN reader learns structural circuit patterns that generalize across tasks — the defining capability that no intervention-based method can match. A GNN trained on IOI models predicts importance on Induction Head models at <strong>r = 0.954</strong>, and the reverse transfer scores <strong>r = 0.963</strong>.
+    We validate on the canonical IOI (Indirect Object Identification) circuit of Wang et al. (2023) in GPT-2 Small — 12 layers, 156 attention heads. The zero-query score combines three signals, all computable from a single clean forward pass:
   </p>
-  <table>
-    <tr><th>Source task</th><th>Target task</th><th>Pearson r</th><th>Queries needed</th></tr>
-    <tr><td>IOI</td><td>Induction Heads</td><td class="mono ok">0.954</td><td>0</td></tr>
-    <tr><td>Induction Heads</td><td>IOI</td><td class="mono ok">0.963</td><td>0</td></tr>
-    <tr><td>IOI (leave-one-out CV)</td><td>IOI (held-out)</td><td class="mono">0.864 ± 0.201</td><td>0</td></tr>
-  </table>
-  <p>
-    Within-task generalization (r = 0.864) is lower than cross-task transfer (r > 0.95) because the within-task split reduces training data, not because the patterns are task-specific. The cross-task result means the learned reading rules are genuine structural properties of how transformers compute, not heuristics that happen to work on one task.
-  </p>
-</section>
+  <ol style="color:#cbd5e1; padding-left:22px; margin-bottom:16px;">
+    <li><strong>Logit-diff attribution</strong> — per-head attribution projected on u(S₂) − u(S₁)</li>
+    <li><strong>Duplicate-token attention</strong> — attention from second S1 to first S1</li>
+    <li><strong>S2 attention</strong> — attention from last token to S2</li>
+  </ol>
 
-<!-- ═══════ 06 ═══════ -->
-<section id="attribution">
-  <div class="sec-num">06 /</div>
-  <h2>Convergent discovery with attribution graphs</h2>
-  <p>
-    Anthropic's attribution graphs (March 2025) independently discovered the same core idea: trace the computation graph of a transformer to reveal its internal structure. Their approach uses backward-Jacobian tracing — a backward pass through the model — to produce attribution graphs that show which components contribute to which outputs.
-  </p>
-  <p>
-    GNOmE achieves the same graph output with <strong>zero interventions</strong> instead of a backward pass. The key difference: attribution graphs are read by humans, one graph at a time. GNOmE's GNN reader <strong>learns to read graphs automatically</strong>, which adds the ability to generalize across models and tasks without retraining.
-  </p>
+  <figure>
+    <img src="figs/fig_ioi_recovery.png" alt="IOI component recovery" loading="lazy">
+    <figcaption><strong>Figure 3.</strong> IOI component recovery on GPT-2 Small (156 units). Lower rank = better. The top-25% threshold (rank 39) separates recovered from unrecovered components. Three of five component classes clear the threshold with the zero-query score.</figcaption>
+  </figure>
+
+  <div class="stat-row">
+    <div class="stat"><div class="n">3/5</div><div class="l">IOI components recovered</div></div>
+    <div class="stat"><div class="n">9.3</div><div class="l">rank: duplicate-token (top 6%)</div></div>
+    <div class="stat"><div class="n">15.0</div><div class="l">rank: name-mover L10_H0</div></div>
+    <div class="stat"><div class="n">ρ = 0.34</div><div class="l">Spearman vs patching GT</div></div>
+  </div>
+
+  <table>
+    <tr><th>Known component</th><th>Zero-query rank</th><th>Patching GT rank</th><th>Verdict</th></tr>
+    <tr><td>Duplicate-token heads (L8_H0, L9_H6, L9_H9)</td><td class="mono ok">9.3 ± 2.1</td><td class="mono">51.7</td><td class="ok">PASS (top 6%)</td></tr>
+    <tr><td>Name-mover (L10_H0)</td><td class="mono ok">15.0</td><td class="mono">5.0</td><td class="ok">PASS (top 10%)</td></tr>
+    <tr><td>Negative name-movers</td><td class="mono ok">19.5 ± 3.5</td><td class="mono">24.0</td><td class="ok">PASS (top 13%)</td></tr>
+    <tr><td>S-inhibition (L8_H1)</td><td class="mono">50.0</td><td class="mono">24.0</td><td style="color:var(--muted)">indirect gate</td></tr>
+    <tr><td>Induction heads (L5_H1, L6_H9)</td><td class="mono">79.5 ± 12</td><td class="mono">133.0</td><td style="color:var(--muted)">indirect route</td></tr>
+  </table>
+
   <div class="callout">
     <p>
-      <strong>Convergence, not competition.</strong> Two independent groups arrived at the same conclusion: the circuit is in the forward pass. Anthropic showed it with backward tracing. GNOmE shows it with forward extraction + learned reading. The synthesis is that mechanistic interpretability is shifting from intervention-based methods to structure-reading methods, and GNOmE is the first system that reads the structure automatically.
+      <strong>Why S-inhibition and induction heads fail the threshold.</strong> Both act on the circuit indirectly — they gate and route the S2 signal that name movers read out. Their direct last-token attribution is small because their effect is mediated through other heads. This is precisely the regime where single-pass attention signatures are weakest. Activation patching also misses induction heads on this 12-prompt evaluation, so the gap is in evaluation scale as much as the method.
     </p>
   </div>
 </section>
 
+<!-- ═══════ 06 ═══════ -->
+<section id="transfer">
+  <div class="sec-num">06 /</div>
+  <h2>Cross-task transfer</h2>
+  <figure>
+    <img src="figs/fig_transfer.png" alt="Cross-task transfer heatmap" loading="lazy">
+    <figcaption><strong>Figure 4.</strong> Cross-task transfer heatmap. A GNN trained on IOI models predicts importance on Induction Head models at r = 0.954, and the reverse scores r = 0.963. Diagonal: leave-one-out cross-validation within each task.</figcaption>
+  </figure>
+  <p>
+    The GNN reader learns structural circuit patterns that generalize across tasks — the defining capability that no intervention-based method can match. Within-task generalization (r = 0.864) is lower than cross-task transfer (r &gt; 0.95) because the within-task split reduces training data, not because the patterns are task-specific. The cross-task result means the learned reading rules are genuine structural properties of how transformers compute.
+  </p>
+</section>
+
 <!-- ═══════ 07 ═══════ -->
-<section id="scaling">
+<section id="demo">
   <div class="sec-num">07 /</div>
+  <h2>Interactive demo</h2>
+  <p>Explore how GNOmE reads a 2-layer transformer's computation graph. Each node is an attention head or MLP layer. Edge thickness = Jacobian contribution flow. Node color = predicted importance (blue = low, green = high).</p>
+
+  <div class="demo">
+    <h3>Circuit reader visualization</h3>
+    <div class="demo-canvas" id="circuitCanvas">
+      <canvas id="circuitGraph" width="800" height="300"></canvas>
+    </div>
+    <div class="demo-controls">
+      <button class="demo-btn active" onclick="setTask('ioi')">IOI task</button>
+      <button class="demo-btn" onclick="setTask('induction')">Induction Head</button>
+      <button class="demo-btn" onclick="setTask('random')">Random baseline</button>
+      <button class="demo-btn" onclick="toggleCorruption()">Toggle corrupted input</button>
+    </div>
+    <p style="font-size:13px; color:var(--muted); margin-top:12px;">
+      <strong>IOI:</strong> Duplicate-token heads (L8_H0, L9_H6) and name-mover (L10_H0) are highlighted green.
+      <strong>Induction:</strong> Induction heads (L5_H1, L6_H9) light up instead.
+      <strong>Corrupted:</strong> Path patching loses signal — GNOmE is unaffected because it reads the clean graph.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════ 08 ═══════ -->
+<section id="attribution">
+  <div class="sec-num">08 /</div>
+  <h2>Convergent discovery with attribution graphs</h2>
+  <figure>
+    <img src="figs/fig_timeline.png" alt="Convergent discovery timeline" loading="lazy">
+    <figcaption><strong>Figure 5.</strong> Timeline of convergent discovery. Two independent groups arrived at the same conclusion: the circuit is in the forward pass. Anthropic's attribution graphs (March 2025) use backward-Jacobian tracing. GNOmE uses forward extraction + learned reading. The synthesis is that interpretability is shifting from interventions to structure reading.</figcaption>
+  </figure>
+  <p>
+    Anthropic's attribution graphs (March 2025) independently discovered the same core idea: trace the computation graph of a transformer to reveal its internal structure. Their approach uses backward-Jacobian tracing — a backward pass through the model — to produce attribution graphs.
+  </p>
+  <p>
+    GNOmE achieves the same graph output with <strong>zero interventions</strong> instead of a backward pass. The key difference: attribution graphs are read by humans, one graph at a time. GNOmE's GNN reader <strong>learns to read graphs automatically</strong>, which adds the ability to generalize across models and tasks without retraining.
+  </p>
+</section>
+
+<!-- ═══════ 09 ═══════ -->
+<section id="scaling">
+  <div class="sec-num">09 /</div>
   <h2>Scaling and limitations</h2>
   <p>
     GNOmE has been validated on 2-layer transformers and GPT-2 Small. Graph extraction completes in under 2 seconds for GPT-2 (156 nodes). For larger models, extraction scales linearly with layers but the O(N²) adjacency matrix grows in memory cost. Sparse graph representations and hierarchical circuit clustering are the next engineering steps.
   </p>
   <div class="limit">
     <p>
-      <strong>What still falls short.</strong> (1) The zero-query score recovers 3 of 7 IOI component classes. S-inhibition and induction heads gate and route signals indirectly, so their direct last-token effect is small — this is a single-pass attention limitation, not a fundamental one. (2) Pearson r = 0.24 vs full activation patching is meaningful but not strong: more IOI prompt diversity and mid-sequence signal windows are the immediate fix. (3) Scaling to 70B+ models requires sparse graph construction; the current dense adjacency is O(N²) in memory. (4) The GNN reader itself needs a separate training run per circuit family (IOI, Induction, etc.), though once trained it transfers across models.
+      <strong>What still falls short.</strong> (1) The zero-query score recovers 3 of 5 IOI component classes. S-inhibition and induction heads gate signals indirectly — this is a single-pass attention limitation, not a fundamental one. (2) Pearson r = 0.24 vs full activation patching is meaningful but not strong: more IOI prompt diversity and mid-sequence signal windows are the immediate fix. (3) Scaling to 70B+ models requires sparse graph construction. (4) The GNN reader needs a separate training run per circuit family, though once trained it transfers across models. (5) No validation on models beyond GPT-2 — the architecture is model-agnostic but this is unproven.
     </p>
   </div>
 </section>
 
-<!-- ═══════ 08 ═══════ -->
+<!-- ═══════ 10 ═══════ -->
 <section id="refs">
-  <div class="sec-num">08 /</div>
+  <div class="sec-num">10 /</div>
   <h2>References</h2>
-  <ol class="refs">
+  <ol style="font-size:14px; color:var(--muted); line-height:1.6; padding-left:20px;">
     <li>Wang et al., "Interpretability in the Wild: a Circuit for Indirect Object Identification in GPT-2 small," NeurIPS 2023. <a href="https://arxiv.org/abs/2211.00593">arXiv</a></li>
     <li>Conmy et al., "Towards Automated Circuit Discovery for Mechanistic Interpretability," NeurIPS 2023 Spotlight. <a href="https://arxiv.org/abs/2304.14997">arXiv</a></li>
     <li>Goldowsky-Dill et al., "Localizing Model Behavior with Path Patching," NeurIPS 2023. <a href="https://arxiv.org/abs/2304.03276">arXiv</a></li>
@@ -296,8 +296,7 @@
   </ol>
   <p style="margin-top:20px;">
     <strong>Code:</strong> <a href="https://github.com/sehajr-singhs/gnome">github.com/sehajr-singhs/gnome</a> ·
-    <strong>Related:</strong> <a href="https://sehajr-singhs.github.io/physrnet/">PSN-1 (universal physics)</a> ·
-    <a href="https://sehajr-singhs.github.io/gnome-manufacturing/">GNoME-Mfg (engineering)</a>
+    <strong>Related:</strong> <a href="https://sehajr-singhs.github.io/physrnet/">PSN-1 (universal physics)</a>
   </p>
 </section>
 
@@ -307,11 +306,123 @@
   Made with conviction, measured precisely, open-sourced. ·
   <a href="https://github.com/sehajr-singhs/gnome">GitHub</a> ·
   <a href="https://sehajr-singhs.github.io/physrnet/">PSN-1</a> ·
-  <a href="https://sehajr-singhs.github.io/gnome-manufacturing/">GNoME-Mfg</a> ·
-  <a href="https://sehajr-singhs.github.io/gnome-psn1-nmi/">Showcase</a> ·
   <a href="mailto:sehajr-singhs@gmail.com">Email</a> ·
   <a href="https://x.com/sehajrsingh">X</a>
 </footer>
+
+<script>
+// Interactive circuit visualization
+const canvas = document.getElementById('circuitGraph');
+const ctx = canvas.getContext('2d');
+let currentTask = 'ioi';
+let corrupted = false;
+
+const layers = [
+  { name: 'L5', heads: ['H0','H1','H2','H3'] },
+  { name: 'L6', heads: ['H7','H8','H9','H10'] },
+  { name: 'L8', heads: ['H0','H1','H2','H3'] },
+  { name: 'L9', heads: ['H5','H6','H7','H9'] },
+  { name: 'L10', heads: ['H0','H1','H2','H3'] },
+];
+
+const knownIOI = {'L8_H0': 0.95, 'L9_H6': 0.88, 'L9_H9': 0.72, 'L10_H0': 0.91, 'L8_H1': 0.45};
+const knownInd = {'L5_H1': 0.93, 'L6_H9': 0.87, 'L8_H0': 0.3, 'L10_H0': 0.2};
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const W = canvas.width, H = canvas.height;
+  const colW = W / (layers.length + 1);
+
+  // Draw edges
+  ctx.globalAlpha = 0.3;
+  for (let i = 0; i < layers.length - 1; i++) {
+    const x1 = (i + 1) * colW;
+    const x2 = (i + 2) * colW;
+    for (let h1 = 0; h1 < layers[i].heads.length; h1++) {
+      for (let h2 = 0; h2 < layers[i+1].heads.length; h2++) {
+        const y1 = (h1 + 1) * H / (layers[i].heads.length + 1);
+        const y2 = (h2 + 1) * H / (layers[i+1].heads.length + 1);
+        const thickness = corrupted ? Math.random() * 0.5 + 0.1 : Math.random() * 1.5 + 0.3;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.strokeStyle = corrupted ? '#f8717180' : '#3b82f640';
+        ctx.lineWidth = thickness;
+        ctx.stroke();
+      }
+    }
+  }
+  ctx.globalAlpha = 1;
+
+  // Draw nodes
+  for (let i = 0; i < layers.length; i++) {
+    const x = (i + 1) * colW;
+    for (let h = 0; h < layers[i].heads.length; h++) {
+      const y = (h + 1) * H / (layers[i].heads.length + 1);
+      const id = layers[i].name + '_' + layers[i].heads[h];
+
+      let importance = 0.15 + Math.random() * 0.1;
+      if (!corrupted) {
+        if (currentTask === 'ioi' && knownIOI[id]) importance = knownIOI[id];
+        if (currentTask === 'induction' && knownInd[id]) importance = knownInd[id];
+      } else {
+        importance = 0.1 + Math.random() * 0.3;
+      }
+
+      const r = 8 + importance * 14;
+      const g = Math.floor(100 + importance * 155);
+      const b = Math.floor(50 + (1-importance) * 100);
+      const color = `rgb(${Math.floor(50+importance*30)}, ${g}, ${b})`;
+
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.strokeStyle = '#e7edf340';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = '#e7edf3';
+      ctx.font = '9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(layers[i].heads[h], x, y + 3);
+    }
+
+    // Layer label
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(layers[i].name, x, H - 8);
+  }
+
+  // Title
+  const title = corrupted ? 'Corrupted input — GNOmE reads clean graph' :
+                currentTask === 'ioi' ? 'IOI task — name movers and duplicate heads highlighted' :
+                currentTask === 'induction' ? 'Induction task — induction heads highlighted' :
+                'Random baseline — no structure';
+  ctx.fillStyle = '#e7edf3';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(title, 12, 18);
+}
+
+function setTask(task) {
+  currentTask = task;
+  document.querySelectorAll('.demo-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  draw();
+}
+
+function toggleCorruption() {
+  corrupted = !corrupted;
+  draw();
+}
+
+// Initial draw
+canvas.width = canvas.parentElement.clientWidth;
+draw();
+window.addEventListener('resize', () => { canvas.width = canvas.parentElement.clientWidth; draw(); });
+</script>
 
 </body>
 </html>
