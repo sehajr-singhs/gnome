@@ -1,6 +1,6 @@
 {
   "id": "sehajrsingh/gnome-large-scale",
-  "title": "GNOmE Large-Scale (6-8 layer transformer, modular addition)",
+  "title": "gnome-large-scale",
   "code_file": "gnome_large_scale.py",
   "language": "python",
   "kernel_type": "script",
