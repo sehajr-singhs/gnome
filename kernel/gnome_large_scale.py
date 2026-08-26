@@ -255,8 +255,10 @@ def gnome_extract_and_score(model, task, rel_thresh=0.1, n_samples=256):
     p = model.p
     
     # Build adjacency matrix
+    # blocks: [embed, attn0, mlp0, ..., attnN-1, mlpN-1, unembed]
+    # units:  [input(2p), embed(dm), attn0(dm), mlp0(dm), ..., attnN(dm), mlpN(dm), output(p)]
     n_input = 2 * p
-    n_hidden = n_layers * d_model * 2  # attn + mlp per layer
+    n_hidden = (2 * n_layers + 1) * d_model  # embed + attn + mlp per layer
     n_total = n_input + n_hidden + p
     
     adj = np.zeros((n_total, n_total), dtype=np.float32)
@@ -264,8 +266,10 @@ def gnome_extract_and_score(model, task, rel_thresh=0.1, n_samples=256):
     # Map blocks to node ranges
     node_ranges = []
     idx = 0
-    node_ranges.append((idx, idx + n_input))  # input
+    node_ranges.append((idx, idx + n_input))  # input (block 0: embed)
     idx += n_input
+    node_ranges.append((idx, idx + d_model))  # embed output (block 0 out / block 1 in)
+    idx += d_model
     for _ in range(n_layers):
         node_ranges.append((idx, idx + d_model))  # attn out
         idx += d_model
@@ -307,7 +311,7 @@ def gnome_extract_and_score(model, task, rel_thresh=0.1, n_samples=256):
             layer_idx = int(name.split("_H")[0][1:])
             head_idx = int(name.split("_H")[1])
             # Attention output nodes for this layer
-            attn_range = node_ranges[1 + layer_idx * 2]
+            attn_range = node_ranges[2 + layer_idx * 2]
             head_nodes = list(range(attn_range[0], attn_range[1]))
             # Approximate: use mean centrality of the head's nodes
             head_d = model._head_dim
@@ -316,7 +320,7 @@ def gnome_extract_and_score(model, task, rel_thresh=0.1, n_samples=256):
             score = float(np.mean(centrality[attn_range[0] + start:attn_range[0] + min(end, attn_range[1])]))
         elif "_MLP" in name:
             layer_idx = int(name.split("_MLP")[0][1:])
-            mlp_range = node_ranges[2 + layer_idx * 2]
+            mlp_range = node_ranges[3 + layer_idx * 2]
             score = float(np.mean(centrality[mlp_range[0]:mlp_range[1]]))
         else:
             continue
