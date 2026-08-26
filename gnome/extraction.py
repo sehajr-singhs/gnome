@@ -83,8 +83,9 @@ def blockwise_jacobians(
                     out.sum(), xb, retain_graph=True, allow_unused=True
                 )[0]
                 if g is not None:
-                    acc[np.arange(d_out), np.arange(d_out)] += (
-                        g.detach().abs().mean(dim=0).cpu().numpy())
+                    diag_len = min(d_out, d_in, g.shape[-1])
+                    acc[np.arange(diag_len), np.arange(diag_len)] += (
+                        g.detach().abs().mean(dim=0).cpu().numpy()[:diag_len])
                 n_seen += 1
                 continue
             # out: (b, d_out). Accumulate mean-abs Jacobian row by row.
