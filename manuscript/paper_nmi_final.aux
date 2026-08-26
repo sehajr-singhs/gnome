@@ -2,89 +2,66 @@
 \providecommand\hyper@newdestlabel[2]{}
 \providecommand\HyField@AuxAddToFields[1]{}
 \providecommand\HyField@AuxAddToCoFields[2]{}
-\citation{anthropic2025circuit}
-\citation{goldowsky2023localizing,wang2023interpretability}
-\citation{conmy2023automatically}
-\citation{nanda2023attribution}
+\citation{anthropic2025}
+\citation{wang2023}
+\citation{conmy2023}
+\citation{syed2023}
+\citation{anthropic2025}
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}The Query Complexity Problem}{1}{subsection.1.1}\protected@file@percent }
-\citation{anthropic2025circuit}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces \textbf  {GNOmE Architecture.} Steps 1-2: Extract computation graph from a single forward pass. Steps 3-4: Read graph with GNN to predict importance. Bottom: convergent discovery with Anthropic's Circuit Tracing (forward vs. backward, same graph conclusion).}}{2}{figure.caption.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Method}{1}{section.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces \textbf  {GNOmE Architecture.} A transformer's computation is extracted as a layered graph via blockwise Jacobian attribution. A graph neural network reads the graph to predict per-unit importance scores. The entire pipeline runs in a single forward pass with zero model interventions.}}{1}{figure.caption.2}\protected@file@percent }
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{fig:architecture}{{1}{2}{\textbf {GNOmE Architecture.} Steps 1-2: Extract computation graph from a single forward pass. Steps 3-4: Read graph with GNN to predict importance. Bottom: convergent discovery with Anthropic's Circuit Tracing (forward vs. backward, same graph conclusion)}{figure.caption.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}Core Insight: The Model Is a Graph}{2}{subsection.1.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {1.3}Contributions}{2}{subsection.1.3}\protected@file@percent }
-\citation{olah2020zoom,elhage2021mathematical,bereska2024mechanistic}
-\citation{wang2023interpretability}
-\citation{conmy2023automatically}
-\citation{nanda2023attribution,syed2023attribution}
-\citation{marks2024sparse}
-\citation{fey2021hierarchical}
-\citation{ying2019nas}
-\citation{anthropic2025circuit}
-\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{3}{section.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Circuit Discovery}{3}{subsection.2.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Graph Neural Networks for Model Analysis}{3}{subsection.2.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Anthropic Circuit Tracing}{3}{subsection.2.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3}Method}{3}{section.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Computation Graph Extraction}{3}{subsection.3.1}\protected@file@percent }
-\citation{wang2023interpretability}
-\citation{olsson2022incontext}
-\newlabel{thm:extraction}{{3.4}{4}{Extraction Sufficiency}{theorem.3.4}{}}
-\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces GNOmE Circuit Extraction}}{4}{algorithm.1}\protected@file@percent }
-\newlabel{alg:extraction}{{1}{4}{GNOmE Circuit Extraction}{algorithm.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}GNN Reader Architecture}{4}{subsection.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4}Experiments}{4}{section.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Setup}{4}{subsection.4.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Main Results}{5}{subsection.4.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces \textbf  {GNOmE vs. path patching.} Left: Per-model Pearson $r$ with ground truth. GNOmE is positive on all 6 models; path patching is negative on 5. Right: Mean correlation. GNOmE ($r=0.748$) outperforms all methods at $O(1)$ query cost.}}{5}{figure.caption.2}\protected@file@percent }
-\newlabel{fig:correlation}{{2}{5}{\textbf {GNOmE vs. path patching.} Left: Per-model Pearson $r$ with ground truth. GNOmE is positive on all 6 models; path patching is negative on 5. Right: Mean correlation. GNOmE ($r=0.748$) outperforms all methods at $O(1)$ query cost}{figure.caption.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Per-model correlation with ground-truth importance.}}{5}{table.caption.3}\protected@file@percent }
-\newlabel{tab:main}{{1}{5}{Per-model correlation with ground-truth importance}{table.caption.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Cross-Task Transfer}{6}{subsection.4.3}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces \textbf  {Cross-task transfer and query complexity.} Left: GNN cross-transfer matrix. IOI-trained GNN achieves $r=0.954$ on Induction models. Right: Query complexity comparison.}}{6}{figure.caption.4}\protected@file@percent }
-\newlabel{fig:transfer}{{3}{6}{\textbf {Cross-task transfer and query complexity.} Left: GNN cross-transfer matrix. IOI-trained GNN achieves $r=0.954$ on Induction models. Right: Query complexity comparison}{figure.caption.4}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces GNN cross-model transfer.}}{6}{table.caption.5}\protected@file@percent }
-\newlabel{tab:transfer}{{2}{6}{GNN cross-model transfer}{table.caption.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}GPT-2 Scale Extraction}{7}{subsection.4.4}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces \textbf  {GPT-2 Small results.} Left: IOI component recovery from zero queries. GNOmE recovers duplicate-token heads and name-mover inside top 25\%. Right: Threshold sensitivity.}}{7}{figure.caption.6}\protected@file@percent }
-\newlabel{fig:gpt2}{{4}{7}{\textbf {GPT-2 Small results.} Left: IOI component recovery from zero queries. GNOmE recovers duplicate-token heads and name-mover inside top 25\%. Right: Threshold sensitivity}{figure.caption.6}{}}
-\citation{bricken2023towards,templeton2024scaling,marks2024sparse}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Ablation}{8}{subsection.4.5}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces \textbf  {Ablation.} Graph structure is necessary (random features collapse to $r \approx 0$). Cross-layer edges carry critical signal ($-42\%$). 2-layer GNN captures diminishing returns beyond 2 hops.}}{8}{figure.caption.7}\protected@file@percent }
-\newlabel{fig:ablation}{{5}{8}{\textbf {Ablation.} Graph structure is necessary (random features collapse to $r \approx 0$). Cross-layer edges carry critical signal ($-42\%$). 2-layer GNN captures diminishing returns beyond 2 hops}{figure.caption.7}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces \textbf  {Extracted GPT-2 computation graph ($\tau =0.3$).} Nodes colored by IOI role: red = duplicate token, orange = S-inhibition, green = name mover. Edge thickness = Jacobian-weighted contribution.}}{8}{figure.caption.8}\protected@file@percent }
-\newlabel{fig:circuit}{{6}{8}{\textbf {Extracted GPT-2 computation graph ($\tau =0.3$).} Nodes colored by IOI role: red = duplicate token, orange = S-inhibition, green = name mover. Edge thickness = Jacobian-weighted contribution}{figure.caption.8}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Feature-Level Extension}{9}{section.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {6}Discussion}{9}{section.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Convergent Discovery}{9}{subsection.6.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces \textbf  {Convergent discovery timeline.} GNOmE and Anthropic's Circuit Tracing independently discovered that neural computation is graph-structured. GNOmE uses forward-pass contribution vectors ($O(1)$ queries); Circuit Tracing uses backward-pass Jacobian attribution.}}{9}{figure.caption.9}\protected@file@percent }
-\newlabel{fig:timeline}{{7}{9}{\textbf {Convergent discovery timeline.} GNOmE and Anthropic's Circuit Tracing independently discovered that neural computation is graph-structured. GNOmE uses forward-pass contribution vectors ($O(1)$ queries); Circuit Tracing uses backward-pass Jacobian attribution}{figure.caption.9}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Why Path Patching Fails}{9}{subsection.6.2}\protected@file@percent }
-\bibcite{olah2020zoom}{{1}{}{{}}{{}}}
-\bibcite{elhage2021mathematical}{{2}{}{{}}{{}}}
-\bibcite{bereska2024mechanistic}{{3}{}{{}}{{}}}
-\bibcite{olsson2022incontext}{{4}{}{{}}{{}}}
-\bibcite{wang2023interpretability}{{5}{}{{}}{{}}}
-\bibcite{goldowsky2023localizing}{{6}{}{{}}{{}}}
-\bibcite{conmy2023automatically}{{7}{}{{}}{{}}}
-\bibcite{nanda2023attribution}{{8}{}{{}}{{}}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Scalability and Limits}{10}{subsection.6.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Limitations}{10}{subsection.6.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusion}{10}{section.7}\protected@file@percent }
-\bibcite{syed2023attribution}{{9}{}{{}}{{}}}
-\bibcite{anthropic2025circuit}{{10}{}{{}}{{}}}
-\bibcite{geiger2021causal}{{11}{}{{}}{{}}}
-\bibcite{meng2022locating}{{12}{}{{}}{{}}}
-\bibcite{marks2024sparse}{{13}{}{{}}{{}}}
-\bibcite{bricken2023towards}{{14}{}{{}}{{}}}
-\bibcite{templeton2024scaling}{{15}{}{{}}{{}}}
-\bibcite{kipf2017semi}{{16}{}{{}}{{}}}
-\bibcite{velickovic2018gat}{{17}{}{{}}{{}}}
-\bibcite{xu2019powerful}{{18}{}{{}}{{}}}
-\bibcite{scarselli2009graph}{{19}{}{{}}{{}}}
-\bibcite{fey2021hierarchical}{{20}{}{{}}{{}}}
-\bibcite{ying2019nas}{{21}{}{{}}{{}}}
-\bibcite{hanna2023greater}{{22}{}{{}}{{}}}
-\providecommand\NAT@force@numbers{}\NAT@force@numbers
-\gdef \@abspage@last{11}
+\newlabel{fig:arch}{{1}{1}{\textbf {GNOmE Architecture.} A transformer's computation is extracted as a layered graph via blockwise Jacobian attribution. A graph neural network reads the graph to predict per-unit importance scores. The entire pipeline runs in a single forward pass with zero model interventions}{figure.caption.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Computation Graph Extraction}{1}{subsection.2.1}\protected@file@percent }
+\citation{wang2023}
+\citation{wang2023}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Graph Network Scorer}{2}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Why Graph Networks?}{2}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Experiments}{2}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Indirect Object Identification}{2}{subsection.3.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces \textbf  {Circuit Discovery Correlation.} GNOmE ($r = 0.748$) outperforms path patching ($r = -0.365$), ACDC ($r = 0.505$), and attribution patching ($r = 0.558$) in correlation with zero-ablation ground truth. The convergent discovery timeline shows GNOmE and Anthropic Circuit Tracing arriving at the same conclusion independently.}}{2}{figure.caption.3}\protected@file@percent }
+\newlabel{fig:correlation}{{2}{2}{\textbf {Circuit Discovery Correlation.} GNOmE ($r = 0.748$) outperforms path patching ($r = -0.365$), ACDC ($r = 0.505$), and attribution patching ($r = 0.558$) in correlation with zero-ablation ground truth. The convergent discovery timeline shows GNOmE and Anthropic Circuit Tracing arriving at the same conclusion independently}{figure.caption.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces IOI Component Recovery}}{2}{table.caption.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}IOI Component Recovery}{2}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Query Complexity}{2}{subsection.3.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces \textbf  {Query Complexity.} GNOmE requires a single forward pass (O(1)) to discover circuits. Path patching requires O($N^2$) queries for $N$ heads. ACDC requires O($N^2$) iterations. The efficiency advantage grows with model size.}}{2}{figure.caption.5}\protected@file@percent }
+\newlabel{fig:queries}{{3}{2}{\textbf {Query Complexity.} GNOmE requires a single forward pass (O(1)) to discover circuits. Path patching requires O($N^2$) queries for $N$ heads. ACDC requires O($N^2$) iterations. The efficiency advantage grows with model size}{figure.caption.5}{}}
+\citation{anthropic2025}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Cross-Task Transfer}{3}{subsection.3.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Convergent Discovery}{3}{section.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces \textbf  {Convergent Discovery Timeline.} GNOmE and Anthropic Circuit Tracing independently arrived at graph-based neural circuit analysis through different methodological paths.}}{3}{figure.caption.6}\protected@file@percent }
+\newlabel{fig:convergent}{{4}{3}{\textbf {Convergent Discovery Timeline.} GNOmE and Anthropic Circuit Tracing independently arrived at graph-based neural circuit analysis through different methodological paths}{figure.caption.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}GPT-2 Computation Graph Visualization}{3}{section.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces \textbf  {Extracted GPT-2 Circuit for IOI.} Nodes are attention heads and MLP layers. Edges are Jacobian-weighted computational paths. Color intensity indicates importance score from GNOmE's GNN. The circuit is sparse: only 15\% of nodes are in the top tier.}}{3}{figure.caption.7}\protected@file@percent }
+\newlabel{fig:circuit}{{5}{3}{\textbf {Extracted GPT-2 Circuit for IOI.} Nodes are attention heads and MLP layers. Edges are Jacobian-weighted computational paths. Color intensity indicates importance score from GNOmE's GNN. The circuit is sparse: only 15\% of nodes are in the top tier}{figure.caption.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Ablation: Graph Structure Matters}{3}{section.6}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Ablation Study}}{3}{table.caption.8}\protected@file@percent }
+\bibcite{anthropic2025}{1}
+\bibcite{wang2023}{2}
+\bibcite{conmy2023}{3}
+\bibcite{syed2023}{4}
+\bibcite{marks2024}{5}
+\bibcite{bricken2023}{6}
+\bibcite{templeton2024}{7}
+\bibcite{olsson2022}{8}
+\bibcite{nanda2023}{9}
+\bibcite{cammarata2020}{10}
+\bibcite{elhage2021}{11}
+\bibcite{li2023}{12}
+\bibcite{neel2022}{13}
+\bibcite{vig2020}{14}
+\bibcite{geiger2021}{15}
+\bibcite{elazar2021}{16}
+\bibcite{radford2019}{17}
+\bibcite{kipf2017}{18}
+\bibcite{velickovic2018}{19}
+\bibcite{battaglia2018}{20}
+\bibcite{micheli2023}{21}
+\bibcite{dawid2024}{22}
+\bibcite{makelov2023}{23}
+\bibcite{banerjee2024}{24}
+\bibcite{stolfo2024}{25}
+\bibcite{chan2022}{26}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Limitations}{4}{section.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}Conclusion}{4}{section.8}\protected@file@percent }
+\gdef \@abspage@last{4}
