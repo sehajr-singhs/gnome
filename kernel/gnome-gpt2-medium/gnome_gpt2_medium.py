@@ -79,7 +79,7 @@ def zero_ablation_heads(model, tok, prompts, n_samples=30):
     d_head = model.config.n_embd // n_heads
 
     texts = [p["template"] + p["S2"] for p in prompts[:n_samples]]
-    ids = tok(texts, return_tensors="pt", padding=True).to(DEVICE)
+    ids = tok(texts, return_tensors="pt", padding=True).input_ids.to(DEVICE)
 
     with torch.no_grad():
         base_logits = model(ids).logits
