@@ -7,9 +7,14 @@ Runs on Kaggle T4 GPU.
 import json, os, subprocess, sys, time, warnings
 warnings.filterwarnings("ignore")
 
-# Reinstall torch with CUDA support for T4 GPU
+# Reinstall torch+torchvision with CUDA support for T4 GPU
 subprocess.check_call([sys.executable, "-m", "pip", "install", "-q",
-    "torch==2.5.1", "--index-url", "https://download.pytorch.org/whl/cu121"],
+    "torch==2.5.1", "torchvision==0.20.1",
+    "--index-url", "https://download.pytorch.org/whl/cu121"],
+    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+# Also pin transformers to version compatible with torch 2.5.1
+subprocess.check_call([sys.executable, "-m", "pip", "install", "-q",
+    "transformers==4.44.2"],
     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 import numpy as np
