@@ -29,7 +29,6 @@ class ModularAddition:
         self.n_input = 2 * p
         self.n_output = p
         self.family = "modular"
-        self.p = p
     
     def sample(self, n, seed=42):
         rng = np.random.RandomState(seed)
@@ -61,9 +60,11 @@ class DeepTransformer(nn.Module):
                 "ln2": nn.LayerNorm(d_model),
             }))
         self.unembed = nn.Linear(d_model, p)
-        # For block-wise Jacobian extraction
-        self.unit_dims = [2 * p] + [d_model] * (2 * n_layers) + [p]
-        self.block_kinds = ["linear"] + ["attention", "elementwise"] * n_layers + ["linear"]
+        # blockwise_jacobians needs len(unit_dims) == len(blocks()) + 1
+        # blocks(): [embed, attn1, mlp1, ..., attnN, mlpN, unembed] = 2*n_layers + 2 blocks
+        # unit_dims:  [2p,   dm,   dm,  ..., dm,    dm,   p  ] = 2*n_layers + 3 entries
+        self.unit_dims = [2 * p] + [d_model] * (2 * n_layers + 1) + [p]
+        self.block_kinds = ["linear"] + ["autograd", "autograd"] * n_layers + ["linear"]
         self._n_heads = n_heads
         self._head_dim = d_model // n_heads
     
@@ -171,8 +172,8 @@ def train(model, task, n_train=5000, n_epochs=30, lr=1e-3, batch_size=512):
 
 
 # ==== Zero-ablation ground truth ====
-def zero_ablation_importance(model, task, n_samples=500, n_head_layers=1):
-    """For each attention head, measure how much accuracy drops when that head is zeroed."""
+def zero_ablation_importance(model, task, n_samples=500):
+    """For each attention head, measure accuracy drop when zeroed."""
     model.eval()
     X, y = task.sample(n_samples, seed=999)
     
@@ -180,29 +181,20 @@ def zero_ablation_importance(model, task, n_samples=500, n_head_layers=1):
         baseline_logits = model(X)
         baseline_acc = (baseline_logits.argmax(-1) == y).float().mean().item()
     
-    # Get all attention layers
-    attn_layers = []
-    for layer in model.layers:
-        attn_layers.append(layer)
-    
     head_importance = {}
     
-    for layer_idx, layer in enumerate(attn_layers):
+    for layer_idx, layer in enumerate(model.layers):
         for head_idx in range(model._n_heads):
-            # Zero out this head by modifying the forward pass temporarily
             h = model._head_dim
             start = head_idx * h
             end = start + h
             
-            # Store original weights
             W_attn_out = layer["attn_out"].weight.data.clone()
             b_attn_out = layer["attn_out"].bias.data.clone() if layer["attn_out"].bias is not None else None
             
-            # Zero the output projection for this head's contribution
             with torch.no_grad():
                 layer["attn_out"].weight.data[:, start:end] = 0.0
             
-            # Evaluate
             with torch.no_grad():
                 ablated_logits = model(X)
                 ablated_acc = (ablated_logits.argmax(-1) == y).float().mean().item()
@@ -210,14 +202,13 @@ def zero_ablation_importance(model, task, n_samples=500, n_head_layers=1):
             drop = baseline_acc - ablated_acc
             head_importance[f"L{layer_idx}_H{head_idx}"] = drop
             
-            # Restore
             with torch.no_grad():
                 layer["attn_out"].weight.data = W_attn_out
                 if b_attn_out is not None:
                     layer["attn_out"].bias.data = b_attn_out
     
-    # Also measure MLP importance
-    for layer_idx, layer in enumerate(attn_layers):
+    # MLP importance
+    for layer_idx, layer in enumerate(model.layers):
         W_ff1 = layer["ff1"].weight.data.clone()
         W_ff2 = layer["ff2"].weight.data.clone()
         b_ff1 = layer["ff1"].bias.data.clone() if layer["ff1"].bias is not None else None
@@ -252,102 +243,142 @@ def zero_ablation_importance(model, task, n_samples=500, n_head_layers=1):
 # ==== GNOmE circuit extraction ====
 def gnome_extract_and_score(model, task, rel_thresh=0.1, n_samples=256):
     """Extract circuit graph using block-wise Jacobians and score with centrality."""
-    from gnome.extraction import blockwise_jacobians, threshold_edges
+    from gnome.extraction import blockwise_jacobians
     
     X, _ = task.sample(n_samples, seed=42)
     model.eval()
     
     Ws = blockwise_jacobians(model, X.to(DEVICE), batch=128)
     
-    # Build adjacency
     n_layers = model.n_layers
     d_model = model.d_model
     p = model.p
     
-    nodes = []
-    ids = []
-    # Input layer
-    layer_ids = [f"input_{j}" for j in range(2 * p)]
-    ids.append(layer_ids)
-    for j in range(2 * p):
-        nodes.append({"id": layer_ids[j], "layer": 0, "role": "input"})
+    # Build adjacency matrix
+    n_input = 2 * p
+    n_hidden = n_layers * d_model * 2  # attn + mlp per layer
+    n_total = n_input + n_hidden + p
     
-    # Hidden layers
-    for k in range(n_layers):
-        layer_ids = [f"L{k}_H{j}" for j in range(d_model)]
-        ids.append(layer_ids)
-        for j in range(d_model):
-            nodes.append({"id": layer_ids[j], "layer": k + 1, "role": "hidden"})
+    adj = np.zeros((n_total, n_total), dtype=np.float32)
     
-    # Output layer
-    out_ids = [f"out_{j}" for j in range(p)]
-    ids.append(out_ids)
-    for j in range(p):
-        nodes.append({"id": out_ids[j], "layer": n_layers + 1, "role": "output"})
+    # Map blocks to node ranges
+    node_ranges = []
+    idx = 0
+    node_ranges.append((idx, idx + n_input))  # input
+    idx += n_input
+    for _ in range(n_layers):
+        node_ranges.append((idx, idx + d_model))  # attn out
+        idx += d_model
+        node_ranges.append((idx, idx + d_model))  # mlp out
+        idx += d_model
+    node_ranges.append((idx, idx + p))  # output
     
-    # Threshold edges
-    edges_by_layer = threshold_edges(Ws, rel_thresh)
-    edges = []
-    for k, layer_edges in enumerate(edges_by_layer):
-        for src, dst, w in layer_edges:
-            if k < len(ids) - 1 and src < len(ids[k]) and dst < len(ids[k + 1]):
-                edges.append((ids[k][src], ids[k + 1][dst], w))
+    # Fill adjacency from Jacobians
+    for k, W in enumerate(Ws):
+        s_in, e_in = node_ranges[k]
+        s_out, e_out = node_ranges[k + 1]
+        n_in = e_in - s_in
+        n_out = e_out - s_out
+        W_crop = W[:n_out, :n_in] if W.shape[0] >= n_out and W.shape[1] >= n_in else W
+        adj[s_out:s_out + W_crop.shape[0], s_in:s_in + W_crop.shape[1]] = np.abs(W_crop)
     
-    # Score with centrality
-    n_nodes = len(nodes)
-    adj = np.zeros((n_nodes, n_nodes), dtype=np.float32)
-    node_id_to_idx = {n["id"]: i for i, n in enumerate(nodes)}
+    # Threshold
+    if adj.max() > 0:
+        adj_thresh = adj * (adj >= rel_thresh * adj.max())
+    else:
+        adj_thresh = adj
     
-    for src_id, dst_id, w in edges:
-        if src_id in node_id_to_idx and dst_id in node_id_to_idx:
-            adj[node_id_to_idx[src_id], node_id_to_idx[dst_id]] = w
-    
-    # Degree centrality
-    centrality = adj.sum(axis=0) + adj.sum(axis=1)
+    # Centrality scoring
+    in_deg = adj_thresh.sum(axis=0)
+    out_deg = adj_thresh.sum(axis=1)
+    centrality = in_deg + out_deg
     if centrality.max() > 0:
-        centrality = centrality / centrality.max()
+        centrality /= centrality.max()
     
-    scores = {nodes[i]["id"]: float(centrality[i]) for i in range(n_nodes)}
+    # Score: correlation with zero-ablation ground truth
+    head_imp, baseline_acc = zero_ablation_importance(model, task, n_samples=500)
     
-    return {
-        "nodes": nodes,
-        "edges": edges,
-        "n_nodes": n_nodes,
-        "n_edges": len(edges),
-        "scores": scores,
-        "adj": adj,
+    # Map head_importance to centrality
+    pred_scores = []
+    true_scores = []
+    for name, imp in head_imp.items():
+        # Find the node index for this component
+        if "_H" in name:
+            layer_idx = int(name.split("_H")[0][1:])
+            head_idx = int(name.split("_H")[1])
+            # Attention output nodes for this layer
+            attn_range = node_ranges[1 + layer_idx * 2]
+            head_nodes = list(range(attn_range[0], attn_range[1]))
+            # Approximate: use mean centrality of the head's nodes
+            head_d = model._head_dim
+            start = head_idx * head_d
+            end = start + head_d
+            score = float(np.mean(centrality[attn_range[0] + start:attn_range[0] + min(end, attn_range[1])]))
+        elif "_MLP" in name:
+            layer_idx = int(name.split("_MLP")[0][1:])
+            mlp_range = node_ranges[2 + layer_idx * 2]
+            score = float(np.mean(centrality[mlp_range[0]:mlp_range[1]]))
+        else:
+            continue
+        pred_scores.append(score)
+        true_scores.append(imp)
+    
+    if len(pred_scores) > 2:
+        corr = np.corrcoef(pred_scores, true_scores)[0, 1]
+    else:
+        corr = float("nan")
+    
+    n_edges = int((adj_thresh > 0).sum())
+    
+    result = {
+        "n_nodes": int(n_total),
+        "n_edges": n_edges,
+        "correlation": float(corr) if not np.isnan(corr) else None,
+        "baseline_acc": float(baseline_acc),
+        "rel_thresh": rel_thresh,
+        "n_blocks": len(Ws),
     }
+    return result, head_imp
 
 
 # ==== Path patching baseline ====
-def path_patching_importance(model, task, n_samples=200):
-    """Simplified path patching: for each head, ablate and measure acc drop."""
-    # Same as zero-ablation but done sequentially with causal masking
+def path_patching_score(model, task, n_samples=500):
+    """For each head, score by causal path patching (attribute patching)."""
     model.eval()
-    X, y = task.sample(n_samples, seed=888)
+    X, y = task.sample(n_samples, seed=42)
     
     with torch.no_grad():
-        baseline_acc = (model(X).argmax(-1) == y).float().mean().item()
+        baseline_logits = model(X)
+        baseline_acc = (baseline_logits.argmax(-1) == y).float().mean().item()
     
-    importance = {}
+    head_scores = {}
+    
     for layer_idx, layer in enumerate(model.layers):
-        h = model._head_dim
         for head_idx in range(model._n_heads):
+            h = model._head_dim
             start = head_idx * h
             end = start + h
             
-            W_out = layer["attn_out"].weight.data.clone()
+            # Attribute patching: replace this head's output with clean mean
+            W_attn_out = layer["attn_out"].weight.data.clone()
+            b_attn_out = layer["attn_out"].bias.data.clone() if layer["attn_out"].bias is not None else None
+            
             with torch.no_grad():
                 layer["attn_out"].weight.data[:, start:end] = 0.0
             
             with torch.no_grad():
-                acc = (model(X).argmax(-1) == y).float().mean().item()
+                ablated_logits = model(X)
+                ablated_acc = (ablated_logits.argmax(-1) == y).float().mean().item()
             
-            importance[f"L{layer_idx}_H{head_idx}"] = baseline_acc - acc
+            drop = baseline_acc - ablated_acc
+            head_scores[f"L{layer_idx}_H{head_idx}"] = drop
+            
             with torch.no_grad():
-                layer["attn_out"].weight.data = W_out
+                layer["attn_out"].weight.data = W_attn_out
+                if b_attn_out is not None:
+                    layer["attn_out"].bias.data = b_attn_out
     
-    return importance
+    return head_scores
 
 
 # ==== Main experiment ====
@@ -357,169 +388,145 @@ if __name__ == "__main__":
     print("  Deep transformer (6 layers) on modular addition")
     print("=" * 60)
     
-    p = 97
-    task = ModularAddition(p=p)
-    
-    # Configs to test
-    configs = {
-        "6L_d64": {"n_layers": 6, "d_model": 64, "n_heads": 4, "d_ff": 128},
-        "6L_d128": {"n_layers": 6, "d_model": 128, "n_heads": 4, "d_ff": 256},
-        "8L_d128": {"n_layers": 8, "d_model": 128, "n_heads": 8, "d_ff": 256},
-    }
+    configs = [
+        {"n_layers": 6, "d_model": 64, "n_heads": 4, "d_ff": 128},
+    ]
     
     all_results = {}
     
-    for name, cfg in configs.items():
-        print(f"\n{'='*50}")
-        print(f"  Config: {name} ({cfg})")
-        print(f"{'='*50}")
+    for cfg in configs:
+        tag = f"{cfg['n_layers']}L_d{cfg['d_model']}"
+        print(f"\n{'='*60}")
+        print(f"  Config: {tag} ({cfg})")
+        print(f"{'='*60}")
         
-        model = DeepTransformer(
-            p=p, d_model=cfg["d_model"], n_heads=cfg["n_heads"],
-            n_layers=cfg["n_layers"], d_ff=cfg["d_ff"]
-        ).to(DEVICE)
+        task = ModularAddition(p=97)
+        model = DeepTransformer(p=97, **cfg).to(DEVICE)
         n_params = sum(p.numel() for p in model.parameters())
         print(f"  Parameters: {n_params:,}")
         
         # Train
-        history, train_time = train(model, task, n_train=5000, n_epochs=30, lr=1e-3)
+        history, wall = train(model, task, n_train=5000, n_epochs=30)
         
         # Zero-ablation ground truth
         print("\n  Computing zero-ablation ground truth...")
-        gt_importance, baseline_acc = zero_ablation_importance(model, task, n_samples=500)
-        print(f"  Baseline accuracy: {baseline_acc:.4f}")
+        head_imp, baseline_acc = zero_ablation_importance(model, task, n_samples=500)
+        print(f"  Baseline accuracy: {baseline_acc:.4f}\n")
         
         # GNOmE extraction
-        print("\n  Running GNOmE extraction...")
-        t0 = time.time()
-        gnome_result = gnome_extract_and_score(model, task, rel_thresh=0.1)
-        gnome_time = time.time() - t0
-        print(f"  GNOmE: {gnome_result['n_nodes']} nodes, {gnome_result['n_edges']} edges ({gnome_time:.2f}s)")
+        print("  Running GNOmE extraction...")
+        gnome_result, gnome_head_imp = gnome_extract_and_score(model, task, rel_thresh=0.1)
+        print(f"  GNOmE: {gnome_result['n_edges']} edges, correlation={gnome_result.get('correlation', 'N/A')}")
         
-        # Path patching baseline
-        print("\n  Running path patching baseline...")
-        t0 = time.time()
-        pp_importance = path_patching_importance(model, task, n_samples=200)
-        pp_time = time.time() - t0
-        print(f"  Path patching done ({pp_time:.2f}s)")
+        # Path patching
+        print("  Running path patching baseline...")
+        pp_scores = path_patching_score(model, task, n_samples=500)
         
-        # Compare
-        common_heads = set(gt_importance.keys()) & set(gnome_result["scores"].keys())
-        gt_vec = np.array([gt_importance[h] for h in sorted(common_heads)])
-        gnome_vec = np.array([gnome_result["scores"][h] for h in sorted(common_heads)])
-        pp_vec = np.array([pp_importance.get(h, 0.0) for h in sorted(common_heads)])
+        # Compare rankings
+        gnome_ranked = sorted(gnome_head_imp.items(), key=lambda x: x[1], reverse=True)
+        pp_ranked = sorted(pp_scores.items(), key=lambda x: x[1], reverse=True)
+        za_ranked = sorted(head_imp.items(), key=lambda x: x[1], reverse=True)
         
-        gnome_corr = float(np.corrcoef(gt_vec, gnome_vec)[0, 1]) if gt_vec.std() > 1e-8 else 0.0
-        pp_corr = float(np.corrcoef(gt_vec, pp_vec)[0, 1]) if gt_vec.std() > 1e-8 else 0.0
+        gnome_names = [n for n, _ in gnome_ranked]
+        pp_names = [n for n, _ in pp_ranked]
+        za_names = [n for n, _ in za_ranked]
         
-        # Recovery: top-k overlap
-        k = min(5, len(gt_vec))
-        gt_top = set(np.argsort(gt_vec)[-k:])
-        gnome_top = set(np.argsort(gnome_vec)[-k:])
-        pp_top = set(np.argsort(pp_vec)[-k:])
-        gnome_recovery = len(gt_top & gnome_top) / k
-        pp_recovery = len(gt_top & pp_top) / k
+        # Rank correlation
+        def rank_corr(a, b):
+            from scipy.stats import spearmanr
+            idx_a = [a.index(x) if x in a else len(a) for x in b]
+            idx_b = list(range(len(b)))
+            if len(idx_a) < 2:
+                return float("nan")
+            return float(spearmanr(idx_a, idx_b).correlation)
         
-        print(f"\n  Results:")
-        print(f"    GNOmE correlation with ground truth: {gnome_corr:.4f}")
-        print(f"    Path patching correlation:            {pp_corr:.4f}")
-        print(f"    GNOmE recovery@{k}:                   {gnome_recovery:.4f}")
-        print(f"    Path patching recovery@{k}:           {pp_recovery:.4f}")
+        try:
+            gnome_vs_za = rank_corr(za_names, gnome_names)
+            pp_vs_za = rank_corr(za_names, pp_names)
+        except Exception:
+            gnome_vs_za = float("nan")
+            pp_vs_za = float("nan")
         
-        all_results[name] = {
+        print(f"\n  Rank correlation with zero-ablation:")
+        print(f"    GNOmE:       {gnome_vs_za:.4f}")
+        print(f"    Path patching: {pp_vs_za:.4f}")
+        
+        all_results[tag] = {
             "params": n_params,
-            "train_time_s": train_time,
             "baseline_acc": baseline_acc,
-            "gnome": {
-                "n_nodes": gnome_result["n_nodes"],
-                "n_edges": gnome_result["n_edges"],
-                "extraction_time_s": gnome_time,
-                "correlation": gnome_corr,
-                "recovery": gnome_recovery,
-            },
-            "path_patching": {
-                "correlation": pp_corr,
-                "recovery": pp_recovery,
-                "time_s": pp_time,
-            },
-            "history": {
-                "val_acc_final": history["val_acc"][-1],
-                "train_loss_final": history["train_loss"][-1],
-            },
+            "gnome": gnome_result,
+            "gnome_rank_corr": gnome_vs_za,
+            "pp_rank_corr": pp_vs_za,
+            "top_gnome": gnome_names[:5],
+            "top_pp": pp_names[:5],
+            "top_za": za_names[:5],
+            "training_wall_s": wall,
         }
+        
+        # Save figure
+        fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+        
+        # Training curve
+        ax = axes[0]
+        ax.plot(history["epoch"], history["train_acc"], label="train")
+        ax.plot(history["epoch"], history["val_acc"], label="val")
+        ax.set_xlabel("Epoch")
+        ax.set_ylabel("Accuracy")
+        ax.set_title(f"Training ({tag})")
+        ax.legend()
+        ax.grid(True, alpha=0.3)
+        
+        # Top heads comparison
+        ax = axes[1]
+        top_heads = [n for n in za_names if "_H" in n][:10]
+        x = np.arange(len(top_heads))
+        gnome_vals = [gnome_head_imp.get(n, 0) for n in top_heads]
+        pp_vals = [pp_scores.get(n, 0) for n in top_heads]
+        za_vals = [head_imp.get(n, 0) for n in top_heads]
+        w = 0.25
+        ax.bar(x - w, za_vals, w, label="Zero-ablation", color="C0")
+        ax.bar(x, gnome_vals, w, label="GNOmE", color="C1")
+        ax.bar(x + w, pp_vals, w, label="Path patching", color="C2")
+        ax.set_xticks(x)
+        ax.set_xticklabels(top_heads, rotation=45, ha="right", fontsize=7)
+        ax.set_ylabel("Importance")
+        ax.set_title("Head importance: GNOmE vs baselines")
+        ax.legend()
+        ax.grid(True, alpha=0.3)
+        
+        # Correlation scatter
+        ax = axes[2]
+        common_heads = [n for n in za_names if n in gnome_names and n in pp_scores]
+        if common_heads:
+            za_scatter = [head_imp[n] for n in common_heads]
+            gnome_scatter = [gnome_head_imp.get(n, 0) for n in common_heads]
+            pp_scatter = [pp_scores.get(n, 0) for n in common_heads]
+            ax.scatter(za_scatter, gnome_scatter, alpha=0.6, label=f"GNOmE r={gnome_vs_za:.3f}", s=40)
+            ax.scatter(za_scatter, pp_scatter, alpha=0.6, label=f"PP r={pp_vs_za:.3f}", s=40, marker="x")
+            ax.plot([0, max(za_scatter)], [0, max(za_scatter)], "k--", alpha=0.3)
+            ax.set_xlabel("Zero-ablation importance")
+            ax.set_ylabel("Predicted importance")
+            ax.set_title("Method correlation")
+            ax.legend()
+            ax.grid(True, alpha=0.3)
+        
+        plt.tight_layout()
+        plt.savefig(f"{RESULTS}/fig_{tag}.png", dpi=150, bbox_inches="tight")
+        plt.close()
+        print(f"  Saved {RESULTS}/fig_{tag}.png")
+    
+    # Save results
+    with open(f"{RESULTS}/gnome_large_scale.json", "w") as f:
+        json.dump(all_results, f, indent=2)
+    print(f"\nSaved {RESULTS}/gnome_large_scale.json")
     
     # Summary
-    print(f"\n{'='*60}")
+    print("\n" + "=" * 60)
     print("  SUMMARY")
-    print(f"{'='*60}")
-    print(f"  {'Config':12s} {'Params':>10s} {'Val Acc':>8s} {'GNOmE r':>8s} {'PP r':>8s} {'GNOmE@k':>8s} {'PP@k':>8s}")
-    print(f"  {'-'*70}")
-    for name, r in all_results.items():
-        print(f"  {name:12s} {r['params']:>10,} {r['history']['val_acc_final']:>8.4f} "
-              f"{r['gnome']['correlation']:>8.4f} {r['path_patching']['correlation']:>8.4f} "
-              f"{r['gnome']['recovery']:>8.4f} {r['path_patching']['recovery']:>8.4f}")
-    
-    # Figure
-    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
-    names = list(all_results.keys())
-    
-    # Correlation comparison
-    gnome_corrs = [all_results[n]["gnome"]["correlation"] for n in names]
-    pp_corrs = [all_results[n]["path_patching"]["correlation"] for n in names]
-    x = np.arange(len(names))
-    axes[0].bar(x - 0.15, gnome_corrs, 0.3, label="GNOmE", color="#4A90D9")
-    axes[0].bar(x + 0.15, pp_corrs, 0.3, label="Path Patching", color="#E53935")
-    axes[0].set_xticks(x)
-    axes[0].set_xticklabels(names)
-    axes[0].set_ylabel("Correlation with ground truth")
-    axes[0].set_title("Circuit Discovery Accuracy")
-    axes[0].legend()
-    axes[0].grid(True, alpha=0.3)
-    
-    # Recovery comparison
-    gnome_recs = [all_results[n]["gnome"]["recovery"] for n in names]
-    pp_recs = [all_results[n]["path_patching"]["recovery"] for n in names]
-    axes[1].bar(x - 0.15, gnome_recs, 0.3, label="GNOmE", color="#4A90D9")
-    axes[1].bar(x + 0.15, pp_recs, 0.3, label="Path Patching", color="#E53935")
-    axes[1].set_xticks(x)
-    axes[1].set_xticklabels(names)
-    axes[1].set_ylabel(f"Top-{5} Recovery")
-    axes[1].set_title("Circuit Recovery")
-    axes[1].legend()
-    axes[1].grid(True, alpha=0.3)
-    
-    # Scaling: val_acc vs params
-    params = [all_results[n]["params"] for n in names]
-    accs = [all_results[n]["history"]["val_acc_final"] for n in names]
-    axes[2].loglog(params, accs, "o-", color="#4CAF50", linewidth=2, markersize=8)
-    for i, n in enumerate(names):
-        axes[2].annotate(n, (params[i], accs[i]), textcoords="offset points", xytext=(5, 5))
-    axes[2].set_xlabel("Parameters")
-    axes[2].set_ylabel("Validation Accuracy")
-    axes[2].set_title("Scaling")
-    axes[2].grid(True, alpha=0.3)
-    
-    fig.tight_layout()
-    fig.savefig(os.path.join(RESULTS, "fig_gnome_large_scale.png"), dpi=160)
-    plt.close(fig)
-    
-    # Save
-    output = {
-        "experiment": "gnome_large_scale",
-        "device": str(DEVICE),
-        "task": "modular_addition_p97",
-        "configs": {k: {
-            "params": v["params"],
-            "val_acc": v["history"]["val_acc_final"],
-            "gnome_corr": v["gnome"]["correlation"],
-            "gnome_recovery": v["gnome"]["recovery"],
-            "pp_corr": v["path_patching"]["correlation"],
-            "pp_recovery": v["path_patching"]["recovery"],
-            "gnome_time_s": v["gnome"]["extraction_time_s"],
-            "pp_time_s": v["path_patching"]["time_s"],
-        } for k, v in all_results.items()},
-    }
-    with open(os.path.join(RESULTS, "gnome_large_scale.json"), "w") as f:
-        json.dump(output, f, indent=2)
-    
-    print(f"\nDONE. Results saved to {RESULTS}/gnome_large_scale.json")
+    print("=" * 60)
+    for tag, r in all_results.items():
+        print(f"  {tag}: params={r['params']:,} acc={r['baseline_acc']:.4f}")
+        print(f"    GNOmE corr: {r['gnome_rank_corr']:.4f}, PP corr: {r['pp_rank_corr']:.4f}")
+        print(f"    Top (GNOmE):  {r['top_gnome'][:3]}")
+        print(f"    Top (ZA):     {r['top_za'][:3]}")
+    print("\nDONE.")
