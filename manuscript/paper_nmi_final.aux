@@ -19,38 +19,37 @@
 \citation{marks2024}
 \citation{templeton2024}
 \citation{anthropic2025}
-\citation{wang2023}
 \@writefile{toc}{\contentsline {section}{\numberline {3}Method}{2}{section.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Computation graph extraction}{2}{subsection.3.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Graph network scorer}{2}{subsection.3.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Why graph networks?}{2}{subsection.3.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {4}Experiments}{3}{section.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Indirect Object Identification}{3}{subsection.4.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces \textbf  {Circuit Discovery Correlation with Ground Truth.} GNOmE ($r = 0.748$) outperforms path patching ($r = -0.365$), ACDC ($r = 0.505$), and attribution patching ($r = 0.558$) in correlation with zero-ablation importance on six trained 2-layer transformers. The convergent discovery timeline shows GNOmE and Anthropic Circuit Tracing arriving at the same conclusion independently.}}{3}{figure.caption.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Synthetic model evaluation}{3}{subsection.4.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces \textbf  {Circuit Discovery Correlation with Ground Truth.} GNOmE ($r = 0.748$) outperforms path patching ($r = -0.365$), ACDC ($r = 0.505$), and attribution patching ($r = 0.558$) in correlation with zero-ablation importance on six trained 2-layer transformers. Per-model correlations: GNOmE ranges from 0.617 to 0.847; path patching ranges from $-0.558$ to $+0.024$.}}{3}{figure.caption.2}\protected@file@percent }
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{fig:correlation}{{1}{3}{\textbf {Circuit Discovery Correlation with Ground Truth.} GNOmE ($r = 0.748$) outperforms path patching ($r = -0.365$), ACDC ($r = 0.505$), and attribution patching ($r = 0.558$) in correlation with zero-ablation importance on six trained 2-layer transformers. The convergent discovery timeline shows GNOmE and Anthropic Circuit Tracing arriving at the same conclusion independently}{figure.caption.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}IOI component recovery}{3}{subsection.4.2}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces IOI Component Recovery on GPT-2 Small (156 units). Lower rank is better. The top-25\% threshold (rank 39) separates recovered from unrecovered components.}}{3}{table.caption.3}\protected@file@percent }
-\newlabel{tab:ioi}{{1}{3}{IOI Component Recovery on GPT-2 Small (156 units). Lower rank is better. The top-25\% threshold (rank 39) separates recovered from unrecovered components}{table.caption.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Query complexity}{3}{subsection.4.3}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces \textbf  {Query Complexity Comparison.} GNOmE requires a single forward pass (O(1)) to discover circuits. Path patching requires O($N^2$) queries for $N$ components. ACDC requires O($N^2$) iterations. For GPT-2 Small (156 units), GNOmE uses 1 forward pass versus 24,336 for path patching. The efficiency advantage grows quadratically with model size.}}{3}{figure.caption.4}\protected@file@percent }
-\newlabel{fig:queries}{{2}{3}{\textbf {Query Complexity Comparison.} GNOmE requires a single forward pass (O(1)) to discover circuits. Path patching requires O($N^2$) queries for $N$ components. ACDC requires O($N^2$) iterations. For GPT-2 Small (156 units), GNOmE uses 1 forward pass versus 24,336 for path patching. The efficiency advantage grows quadratically with model size}{figure.caption.4}{}}
+\newlabel{fig:correlation}{{1}{3}{\textbf {Circuit Discovery Correlation with Ground Truth.} GNOmE ($r = 0.748$) outperforms path patching ($r = -0.365$), ACDC ($r = 0.505$), and attribution patching ($r = 0.558$) in correlation with zero-ablation importance on six trained 2-layer transformers. Per-model correlations: GNOmE ranges from 0.617 to 0.847; path patching ranges from $-0.558$ to $+0.024$}{figure.caption.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}GPT-2 Small IOI component recovery}{3}{subsection.4.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces IOI Component Recovery on GPT-2 Small (156 units). Lower rank is better. Top-25\% threshold (rank 39) separates recovered from unrecovered.}}{3}{table.caption.3}\protected@file@percent }
+\newlabel{tab:ioi}{{1}{3}{IOI Component Recovery on GPT-2 Small (156 units). Lower rank is better. Top-25\% threshold (rank 39) separates recovered from unrecovered}{table.caption.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}GPT-2 computation graph visualization}{3}{subsection.4.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces \textbf  {Extracted GPT-2 Small Circuit for IOI.} Nodes are attention heads and MLP layers. Edges are Jacobian-weighted computational paths. Color intensity indicates GNOmE importance score. The circuit is sparse: only 15\% of nodes carry high importance.}}{3}{figure.caption.4}\protected@file@percent }
+\newlabel{fig:circuit}{{2}{3}{\textbf {Extracted GPT-2 Small Circuit for IOI.} Nodes are attention heads and MLP layers. Edges are Jacobian-weighted computational paths. Color intensity indicates GNOmE importance score. The circuit is sparse: only 15\% of nodes carry high importance}{figure.caption.4}{}}
 \citation{anthropic2025}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Cross-task transfer}{4}{subsection.4.4}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces \textbf  {Convergent Discovery Timeline.} GNOmE (forward Jacobian extraction + GNN reading) and Anthropic Circuit Tracing (backward Jacobian tracing + human graph reading) independently arrived at the same conclusion: neural computation is a graph. The convergence is methodological, not coincidental.}}{4}{figure.caption.5}\protected@file@percent }
-\newlabel{fig:convergent}{{3}{4}{\textbf {Convergent Discovery Timeline.} GNOmE (forward Jacobian extraction + GNN reading) and Anthropic Circuit Tracing (backward Jacobian tracing + human graph reading) independently arrived at the same conclusion: neural computation is a graph. The convergence is methodological, not coincidental}{figure.caption.5}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Convergent discovery with attribution graphs}{4}{section.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {6}GPT-2 computation graph visualization}{4}{section.6}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces \textbf  {Extracted GPT-2 Small Circuit for IOI.} Nodes are attention heads and MLP layers. Edges are Jacobian-weighted computational paths. Color intensity indicates GNOmE importance score. The circuit is sparse: only 15\% of nodes are in the top importance tier.}}{4}{figure.caption.6}\protected@file@percent }
-\newlabel{fig:circuit}{{4}{4}{\textbf {Extracted GPT-2 Small Circuit for IOI.} Nodes are attention heads and MLP layers. Edges are Jacobian-weighted computational paths. Color intensity indicates GNOmE importance score. The circuit is sparse: only 15\% of nodes are in the top importance tier}{figure.caption.6}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {7}Ablation: graph structure matters}{5}{section.7}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Ablation Study. Removing graph edges drops correlation from 0.748 to 0.312. The GNN genuinely uses structural information.}}{5}{table.caption.7}\protected@file@percent }
-\newlabel{tab:ablation}{{2}{5}{Ablation Study. Removing graph edges drops correlation from 0.748 to 0.312. The GNN genuinely uses structural information}{table.caption.7}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {8}GNOmE versus the field}{5}{section.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Query complexity}{4}{subsection.4.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces \textbf  {Query Complexity Comparison.} GNOmE requires a single forward pass (O(1)) to discover circuits. Path patching requires O($N^2$) queries. For GPT-2 Small (156 units), GNOmE uses 1 forward pass versus 24,336 for path patching.}}{4}{figure.caption.5}\protected@file@percent }
+\newlabel{fig:queries}{{3}{4}{\textbf {Query Complexity Comparison.} GNOmE requires a single forward pass (O(1)) to discover circuits. Path patching requires O($N^2$) queries. For GPT-2 Small (156 units), GNOmE uses 1 forward pass versus 24,336 for path patching}{figure.caption.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Cross-task transfer}{4}{subsection.4.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Ablation: graph structure matters}{4}{section.5}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Ablation Study. Removing graph edges drops correlation from 0.748 to 0.312. The GNN genuinely uses structural information.}}{4}{table.caption.6}\protected@file@percent }
+\newlabel{tab:ablation}{{2}{4}{Ablation Study. Removing graph edges drops correlation from 0.748 to 0.312. The GNN genuinely uses structural information}{table.caption.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Convergent discovery with attribution graphs}{4}{section.6}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces \textbf  {Convergent Discovery Timeline.} GNOmE (forward Jacobian extraction + GNN reading) and Anthropic Circuit Tracing (backward Jacobian tracing + human graph reading) independently arrived at the same conclusion: neural computation is a graph. The convergence is methodological, not coincidental.}}{5}{figure.caption.7}\protected@file@percent }
+\newlabel{fig:convergent}{{4}{5}{\textbf {Convergent Discovery Timeline.} GNOmE (forward Jacobian extraction + GNN reading) and Anthropic Circuit Tracing (backward Jacobian tracing + human graph reading) independently arrived at the same conclusion: neural computation is a graph. The convergence is methodological, not coincidental}{figure.caption.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Comparison with existing methods}{5}{section.7}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Method Comparison for Circuit Discovery.}}{5}{table.caption.8}\protected@file@percent }
 \newlabel{tab:comparison}{{3}{5}{Method Comparison for Circuit Discovery}{table.caption.8}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {9}Limitations}{5}{section.9}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {10}Conclusion}{5}{section.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}Limitations}{5}{section.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9}Conclusion}{5}{section.9}\protected@file@percent }
 \bibcite{anthropic2025}{1}
 \bibcite{wang2023}{2}
 \bibcite{conmy2023}{3}
