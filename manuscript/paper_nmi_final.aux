@@ -1,0 +1,116 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{goldowsky2023localizing,wang2023interpretability}
+\citation{geiger2021causal,meng2022locating}
+\citation{conmy2023automated}
+\citation{nanda2023attribution}
+\citation{velickovic2018gat,kipf2017semi,xu2019powerful}
+\citation{anthropic2025circuit}
+\citation{olah2020zoom,elhage2021mathematical,bereska2024mechanistic}
+\citation{olsson2022incontext}
+\citation{wang2023interpretability}
+\citation{mcdougall2023copy}
+\citation{goldowsky2023localizing,wang2023interpretability}
+\citation{conmy2023automated}
+\citation{nanda2023attribution,syed2023attribution}
+\citation{anthropic2025circuit}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces \textbf  {GNOmE Architecture Overview.} The pipeline extracts a computation graph from a single forward pass (Step 1--2), then reads it with a GNN to predict importance (Step 3--4). The key advantage is $O(1)$ query complexity versus $O(N^2)$ for path patching and $O(N^2 \cdot T)$ for ACDC. The convergent discovery box at bottom highlights that GNOmE and Anthropic's Circuit Tracing independently arrived at graph-based representations of neural computation.}}{2}{figure.caption.1}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:architecture}{{1}{2}{\textbf {GNOmE Architecture Overview.} The pipeline extracts a computation graph from a single forward pass (Step 1--2), then reads it with a GNN to predict importance (Step 3--4). The key advantage is $O(1)$ query complexity versus $O(N^2)$ for path patching and $O(N^2 \cdot T)$ for ACDC. The convergent discovery box at bottom highlights that GNOmE and Anthropic's Circuit Tracing independently arrived at graph-based representations of neural computation}{figure.caption.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Core Insight: The Model \emph  {Is} a Graph}{2}{subsection.1.1}\protected@file@percent }
+\citation{wang2023interpretability}
+\citation{anthropic2025circuit}
+\citation{olah2020zoom,elhage2021mathematical,elhage2022toy,elhage2022superposition}
+\citation{elhage2021mathematical}
+\citation{olsson2022incontext}
+\citation{wang2023interpretability}
+\citation{conmy2023automated}
+\citation{nanda2023attribution}
+\citation{marks2024sparse}
+\citation{bricken2023towards,templeton2024scaling}
+\citation{scarselli2009graph,kipf2017semi,velickovic2018gat,xu2019powerful}
+\citation{fey2021hierarchical}
+\citation{ying2019nas}
+\citation{anthropic2025circuit}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}Contributions}{3}{subsection.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{3}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Mechanistic Interpretability}{3}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Circuit Discovery Methods}{3}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Graph Neural Networks for Model Analysis}{3}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Anthropic Circuit Tracing}{3}{subsection.2.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Method}{4}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}The Computation Graph}{4}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Circuit Extraction Algorithm}{4}{subsection.3.2}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces GNOmE Circuit Extraction}}{4}{algorithm.1}\protected@file@percent }
+\newlabel{alg:extraction}{{1}{4}{GNOmE Circuit Extraction}{algorithm.1}{}}
+\newlabel{thm:extraction}{{3.4}{5}{Extraction Sufficiency}{theorem.3.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}GNN Reader Architecture}{5}{subsection.3.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces \textbf  {Extracted Computation Graph (GPT-2 Small, $\tau =0.3$).} Nodes are attention heads colored by their known IOI role: red = duplicate token heads (L8\_H0, L9\_H6, L9\_H9), orange = S-inhibition (L8\_H1), green = name mover (L10\_H0). Edge thickness reflects Jacobian-weighted contribution strength. The zero-query score recovers 3/7 known component classes from a single forward pass with no interventions.}}{5}{figure.caption.2}\protected@file@percent }
+\newlabel{fig:circuit}{{2}{5}{\textbf {Extracted Computation Graph (GPT-2 Small, $\tau =0.3$).} Nodes are attention heads colored by their known IOI role: red = duplicate token heads (L8\_H0, L9\_H6, L9\_H9), orange = S-inhibition (L8\_H1), green = name mover (L10\_H0). Edge thickness reflects Jacobian-weighted contribution strength. The zero-query score recovers 3/7 known component classes from a single forward pass with no interventions}{figure.caption.2}{}}
+\citation{wang2023interpretability}
+\citation{olsson2022incontext}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Experiments}{6}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Experimental Setup}{6}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Main Results: GNOmE Outperforms Path Patching}{6}{subsection.4.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces \textbf  {GNOmE vs.\ path patching.} (a) Per-model Pearson correlation with ground-truth zero-ablation importance. GNOmE achieves positive correlation on all 6 models; path patching is negative on 5 of 6. (b) Mean correlation across all methods. GNOmE ($r=0.748$) outperforms ACDC ($r=0.505$), attribution patching ($r=0.398$), and path patching ($r=-0.365$) while requiring only $O(1)$ queries.}}{6}{figure.caption.3}\protected@file@percent }
+\newlabel{fig:correlation}{{3}{6}{\textbf {GNOmE vs.\ path patching.} (a) Per-model Pearson correlation with ground-truth zero-ablation importance. GNOmE achieves positive correlation on all 6 models; path patching is negative on 5 of 6. (b) Mean correlation across all methods. GNOmE ($r=0.748$) outperforms ACDC ($r=0.505$), attribution patching ($r=0.398$), and path patching ($r=-0.365$) while requiring only $O(1)$ queries}{figure.caption.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Per-model correlation with ground-truth (zero-ablation) importance. Bold = best per row.}}{7}{table.caption.4}\protected@file@percent }
+\newlabel{tab:main}{{1}{7}{Per-model correlation with ground-truth (zero-ablation) importance. Bold = best per row}{table.caption.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Cross-Model Transfer}{7}{subsection.4.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces \textbf  {Cross-task transfer and query complexity.} (a) GNN cross-transfer matrix: IOI-trained GNN achieves $r=0.954$ on Induction models, and vice versa $r=0.963$. (b) Query complexity comparison: GNOmE requires 1 forward pass; path patching requires 8 (for our 2-layer models), ACDC requires $\sim $120 iterations.}}{7}{figure.caption.5}\protected@file@percent }
+\newlabel{fig:transfer}{{4}{7}{\textbf {Cross-task transfer and query complexity.} (a) GNN cross-transfer matrix: IOI-trained GNN achieves $r=0.954$ on Induction models, and vice versa $r=0.963$. (b) Query complexity comparison: GNOmE requires 1 forward pass; path patching requires 8 (for our 2-layer models), ACDC requires $\sim $120 iterations}{figure.caption.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces GNN cross-model transfer performance. LOO = leave-one-out cross-validation.}}{7}{table.caption.6}\protected@file@percent }
+\newlabel{tab:transfer}{{2}{7}{GNN cross-model transfer performance. LOO = leave-one-out cross-validation}{table.caption.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Threshold Sensitivity}{8}{subsection.4.4}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces GNN correlation and edge count vs.\ edge threshold $\tau $.}}{8}{table.caption.7}\protected@file@percent }
+\newlabel{tab:threshold}{{3}{8}{GNN correlation and edge count vs.\ edge threshold $\tau $}{table.caption.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}GPT-2 Scale Extraction and Zero-Query Validation}{8}{subsection.4.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces \textbf  {GPT-2 Small results.} (a) IOI component recovery: zero-query score recovers duplicate-token heads (L8\_H0, L9\_H6, L9\_H9) and name-mover (L10\_H0)---3 of 7 known classes. Activation patching recovers 4/7. (b) Threshold sensitivity: edge density drops smoothly as $\tau $ increases, while correlation peaks at $\tau =0.3$.}}{8}{figure.caption.8}\protected@file@percent }
+\newlabel{fig:gpt2}{{5}{8}{\textbf {GPT-2 Small results.} (a) IOI component recovery: zero-query score recovers duplicate-token heads (L8\_H0, L9\_H6, L9\_H9) and name-mover (L10\_H0)---3 of 7 known classes. Activation patching recovers 4/7. (b) Threshold sensitivity: edge density drops smoothly as $\tau $ increases, while correlation peaks at $\tau =0.3$}{figure.caption.8}{}}
+\citation{bricken2023towards,templeton2024scaling,marks2024sparse}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6}Ablation Analysis}{9}{subsection.4.6}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces \textbf  {Ablation analysis.} Each bar removes one component from the full GNOmE pipeline. Graph structure is necessary (random features collapse to $r \approx 0$), cross-layer edges carry critical circuit signal ($-42\%$), and the 2-layer GNN captures diminishing returns beyond 2 hops.}}{9}{figure.caption.9}\protected@file@percent }
+\newlabel{fig:ablation}{{6}{9}{\textbf {Ablation analysis.} Each bar removes one component from the full GNOmE pipeline. Graph structure is necessary (random features collapse to $r \approx 0$), cross-layer edges carry critical circuit signal ($-42\%$), and the 2-layer GNN captures diminishing returns beyond 2 hops}{figure.caption.9}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Feature-Level Extension}{9}{section.5}\protected@file@percent }
+\newlabel{sec:features}{{5}{9}{Feature-Level Extension}{section.5}{}}
+\citation{marks2024sparse}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Discussion}{10}{section.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Connection to Anthropic Circuit Tracing}{10}{subsection.6.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces \textbf  {Convergent discovery timeline.} GNOmE and Anthropic's Circuit Tracing independently discovered that neural network computation is best understood as a graph. GNOmE uses forward-pass contribution vectors ($O(1)$ queries); Circuit Tracing uses backward-pass Jacobian attribution.}}{10}{figure.caption.10}\protected@file@percent }
+\newlabel{fig:timeline}{{7}{10}{\textbf {Convergent discovery timeline.} GNOmE and Anthropic's Circuit Tracing independently discovered that neural network computation is best understood as a graph. GNOmE uses forward-pass contribution vectors ($O(1)$ queries); Circuit Tracing uses backward-pass Jacobian attribution}{figure.caption.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Why Path Patching Fails on These Models}{10}{subsection.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Scalability and Limits}{10}{subsection.6.3}\protected@file@percent }
+\bibcite{olah2020zoom}{{1}{}{{}}{{}}}
+\bibcite{elhage2021mathematical}{{2}{}{{}}{{}}}
+\bibcite{elhage2022toy}{{3}{}{{}}{{}}}
+\bibcite{elhage2022superposition}{{4}{}{{}}{{}}}
+\bibcite{bereska2024mechanistic}{{5}{}{{}}{{}}}
+\bibcite{olsson2022incontext}{{6}{}{{}}{{}}}
+\bibcite{wang2023interpretability}{{7}{}{{}}{{}}}
+\bibcite{goldowsky2023localizing}{{8}{}{{}}{{}}}
+\bibcite{conmy2023automated}{{9}{}{{}}{{}}}
+\bibcite{nanda2023attribution}{{10}{}{{}}{{}}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Limitations}{11}{subsection.6.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusion}{11}{section.7}\protected@file@percent }
+\bibcite{nanda2023edge}{{11}{}{{}}{{}}}
+\bibcite{syed2023attribution}{{12}{}{{}}{{}}}
+\bibcite{anthropic2025circuit}{{13}{}{{}}{{}}}
+\bibcite{geiger2021causal}{{14}{}{{}}{{}}}
+\bibcite{meng2022locating}{{15}{}{{}}{{}}}
+\bibcite{mcdougall2023copy}{{16}{}{{}}{{}}}
+\bibcite{hanna2023greater}{{17}{}{{}}{{}}}
+\bibcite{marks2024sparse}{{18}{}{{}}{{}}}
+\bibcite{bricken2023towards}{{19}{}{{}}{{}}}
+\bibcite{templeton2024scaling}{{20}{}{{}}{{}}}
+\bibcite{kipf2017semi}{{21}{}{{}}{{}}}
+\bibcite{velickovic2018gat}{{22}{}{{}}{{}}}
+\bibcite{xu2019powerful}{{23}{}{{}}{{}}}
+\bibcite{scarselli2009graph}{{24}{}{{}}{{}}}
+\bibcite{fey2021hierarchical}{{25}{}{{}}{{}}}
+\bibcite{ying2019nas}{{26}{}{{}}{{}}}
+\bibcite{vig2020causal}{{27}{}{{}}{{}}}
+\providecommand\NAT@force@numbers{}\NAT@force@numbers
+\gdef \@abspage@last{12}
