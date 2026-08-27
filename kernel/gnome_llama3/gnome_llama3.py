@@ -35,7 +35,7 @@ if DEVICE == "cpu":
 
 print("\n--- Loading model ---")
 
-MODEL_NAME = "meta-llama/Meta-Llama-3-8B"
+MODEL_NAME = "Qwen/Qwen2.5-1.5B-Instruct"
 USE_LLAMA = True
 
 try:
@@ -52,10 +52,10 @@ try:
             device_map="auto",
             trust_remote_code=True
         )
-        model_name = "Llama-3-8B"
-        n_layers = len(model.model.layers)
-        d_model = model.config.hidden_size
-        n_heads = model.config.num_attention_heads
+        model_name = "Qwen2.5-1.5B"
+        n_layers = len(model.model.layers) if hasattr(model, "model") else len(model.transformer.h)
+        d_model = getattr(model.config, "hidden_size", getattr(model.config, "n_embd", 1024))
+        n_heads = getattr(model.config, "num_attention_heads", getattr(model.config, "n_head", 16))
     except Exception as e:
         print(f"Llama-3 failed ({e}), falling back to GPT-2 Medium...")
         MODEL_NAME = "gpt2-medium"
@@ -71,7 +71,7 @@ try:
     print(f"  Layers: {n_layers}, Hidden: {d_model}, Heads: {n_heads}")
     print(f"  Parameters: {sum(p.numel() for p in model.parameters())/1e6:.1f}M")
     print(f"  Load time: {load_time:.1f}s")
-    print(f"  GPU memory: {torch.cuda.memory_allocated()/1024**3:.2f} GB / {torch.cuda.get_device_properties(0).total_mem/1024**3:.2f} GB")
+    print(f"  GPU memory: {torch.cuda.memory_allocated()/1024**3:.2f} GB / {torch.cuda.get_device_properties(0).total_memory/1024**3:.2f} GB")
     
 except Exception as e:
     print(f"Failed to load model: {e}")
