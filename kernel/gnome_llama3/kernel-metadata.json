@@ -1,0 +1,13 @@
+{
+  "id": "sehajrsingh/gnome-llama3",
+  "title": "gnome-llama3",
+  "code_file": "gnome_llama3.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "dataset_sources": [],
+  "competition_sources": [],
+  "kernel_sources": []
+}
