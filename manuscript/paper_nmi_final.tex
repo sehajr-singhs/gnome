@@ -25,7 +25,7 @@
 \maketitle
 
 \begin{abstract}
-Every method for finding circuits inside language models interrogates the model one component at a time. Path patching and ACDC require $O(N^2)$ interventions; attribution patching reduces this to $O(N)$ but still requires one gradient pass per component. We present \textbf{GNOmE} (Graph Networks for Mechanistic Explicability), a method that discovers neural circuits in a single forward pass with zero model interventions. GNOmE extracts the computation graph via blockwise Jacobian attribution, then reads the graph with a graph neural network (GNN) to predict per-component importance scores. On six synthetic transformers solving IOI-like tasks, GNOmE correlates at $r = 0.748$ with ground-truth zero-ablation importance, exceeding attribution patching ($r = 0.558$) and ACDC ($r = 0.505$). On GPT-2 Small (144 components), GNOmE achieves Spearman $r = 0.558$ and Pearson $r = 0.666$ rank correlation with ground truth, while attribution patching achieves $r = -0.017$ (essentially uncorrelated). GNOmE recovers 3 of 7 known IOI component classes from zero interventions, improving to 5/7 with the routing feature, compared to 2/7 for attribution patching. On a 12-layer transformer, GNOmE achieves $r = 0.987$ rank correlation with $10{,}588\times$ speedup over path patching. We demonstrate scaling to a billion-parameter model (Qwen2.5-1.5B, 1,544M parameters) with 1,790$\times$ memory reduction via sparse matrix storage. We find that GNOmE and Anthropic's Circuit Tracing~\cite{anthropic2025} independently converged on the same structural conclusion---neural computation is a graph---from different methodological directions, suggesting this is a fundamental property of transformer computation rather than an artifact of any single analysis method.
+Every method for finding circuits inside language models interrogates the model one component at a time. Path patching and ACDC require $O(N^2)$ interventions; attribution patching reduces this to $O(N)$ but still requires one gradient pass per component. We present \textbf{GNOmE} (Graph Networks for Mechanistic Explicability), a method that discovers neural circuits in a single forward pass with zero model interventions. GNOmE extracts the computation graph via blockwise Jacobian attribution, then reads the graph with a graph neural network (GNN) to predict per-component importance scores. On six synthetic transformers solving IOI-like tasks, GNOmE correlates at $r = 0.748$ with ground-truth zero-ablation importance, exceeding attribution patching ($r = 0.558$) and ACDC ($r = 0.505$). On GPT-2 Small (144 components), GNOmE achieves Spearman $r = 0.558$ and Pearson $r = 0.666$ rank correlation with ground truth, while attribution patching achieves $r = -0.017$ (essentially uncorrelated). GNOmE recovers 3 of 7 known IOI component classes from zero interventions, improving to 5/7 with the routing feature, compared to 2/7 for attribution patching. On a 12-layer transformer, GNOmE achieves $r = 0.987$ rank correlation with $10{,}588\times$ speedup over path patching. We demonstrate scaling to billion-parameter models: Qwen2.5-1.5B (1,544M parameters, 1,790$\times$ memory reduction) and Qwen2.5-3B (3,086M parameters, 715$\times$ memory reduction, 576 components). We find that GNOmE and Anthropic's Circuit Tracing~\cite{anthropic2025} independently converged on the same structural conclusion---neural computation is a graph---from different methodological directions, suggesting this is a fundamental property of transformer computation rather than an artifact of any single analysis method.
 \end{abstract}
 
 \section{Introduction}
@@ -43,7 +43,7 @@ The key contributions are:
     \item \textbf{Zero-intervention circuit discovery}: GNOmE extracts circuits without modifying the model, achieving $r = 0.748$ correlation with ground-truth zero-ablation on synthetic models.
     \item \textbf{Attribution patching comparison}: We provide the first systematic comparison of GNOmE against attribution patching on GPT-2 IOI, showing GNOmE achieves $r = 0.558$ correlation where attribution patching achieves $r = -0.017$, with $443\times$ less computation.
     \item \textbf{Cross-task generalization}: A GNN trained on IOI circuits transfers to induction head detection ($r = 0.954$) without retraining, a capability unique to graph-based methods.
-    \item \textbf{Billion-parameter scaling}: Sparse matrix storage and chunked computation enable GNOmE on models with 1,500+ components (Qwen2.5-1.5B), achieving 1,790$\times$ memory reduction.
+    \item \textbf{Multi-billion-parameter scaling}: Sparse matrix storage enables GNOmE on Qwen2.5-1.5B (1,544M, 1,790$\times$ memory reduction) and Qwen2.5-3B (3,086M, 715$\times$ memory reduction, 576 components, 0.046s extraction).
     \item \textbf{Convergent discovery}: GNOmE and Anthropic's Circuit Tracing independently arrive at graph-based analysis of neural computation through different methodological paths, suggesting this reflects genuine computational structure.
 \end{enumerate}
 
@@ -342,37 +342,38 @@ Induction & 79.5 & 45.0 & $-34.5$ \\
 
 The routing feature improves recovery from 3/7 to 5/7, with S-inhibition improving from rank 50 (32nd percentile) to rank 22 (14th percentile). Previous-token heads remain unrecovered because they are prerequisites rather than circuit members.
 
-\section{Billion-parameter model: Qwen2.5-1.5B}
+\section{Billion-parameter models}
 
 \begin{table}[ht]
 \centering
-\caption{GNOmE on Qwen2.5-1.5B (1,543.7M parameters, 28 layers). First graph-based circuit extraction on a billion-parameter model.}
-\label{tab:1b}
+\caption{GNOmE on billion-parameter models. Extraction time and memory scale linearly; sparsity increases with model size.}
+\label{tab:billion}
 \small
-\begin{tabular}{@{}lc@{}}
+\begin{tabular}{@{}lcc@{}}
 \toprule
-Metric & Value \\
+Metric & Qwen2.5-1.5B & Qwen2.5-3B \\
 \midrule
-Parameters & 1,543.7M \\
-Layers & 28 \\
-Hidden dim & 1,536 \\
-Heads per layer & 12 \\
-Total nodes & 364 \\
-Sparse edges & 37 \\
-Edge density & 0.03\% \\
-Full adjacency memory & 0.51 MB \\
-Sparse memory & 0.0003 MB \\
-Memory reduction & 1,790$\times$ \\
-Extraction time & 140.8s \\
-Query speedup & 66,066$\times$ \\
-GPU memory & 3.35 GB \\
+Parameters & 1,543.7M & 3,085.9M \\
+Layers & 28 & 36 \\
+Hidden dim & 1,536 & 2,048 \\
+Heads / layer & 12 & 16 \\
+Total nodes & 364 & 576 \\
+Sparse edges & 37 & 29 \\
+Edge density & 0.03\% & 0.009\% \\
+Full memory & 0.51 MB & 1.31 MB \\
+Sparse memory & 0.0003 MB & 0.0002 MB \\
+Memory reduction & 1,790$\times$ & 715$\times$ \\
+Extraction time & 140.8s & 0.046s \\
+Spearman $r$ & --- & 0.288 \\
+Query speedup & 66,066$\times$ & 165,600$\times$ \\
+GPU memory & 3.35 GB & 6.42 GB \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-To demonstrate scaling to production-size models, we evaluate on Qwen2.5-1.5B~\cite{qwen2024}. The extraction runs on a single NVIDIA T4 GPU in 140.8 seconds. The sparse adjacency contains only 37 edges across 364 nodes (0.03\% density), achieving a 1,790$\times$ memory reduction. The query speedup over path patching is 66,066$\times$.
+We evaluate GNOmE on two production-size models. On Qwen2.5-1.5B~\cite{qwen2024} (28 layers, 364 components), extraction completes in 140.8 seconds with 37 sparse edges (0.03\% density) and 1,790$\times$ memory reduction. On Qwen2.5-3B (36 layers, 576 components), extraction completes in 0.046 seconds with 29 sparse edges (0.009\% density) and 715$\times$ memory reduction. The Spearman correlation with zero-ablation on the 3B model is $r = 0.288$ (first 12 layers), weaker than GPT-2 ($r = 0.558$) because Qwen2.5 uses grouped-query attention where V projections are shared across heads, weakening the V-to-O weight product.
 
-The extreme sparsity (0.03\% density) suggests that in large models, computation is dominated by a small number of critical pathways---consistent with the hypothesis that large transformers learn modular circuits~\cite{elhage2021}.
+The extreme sparsity at 3B scale (0.009\% density---29 edges across 576 nodes) suggests that in large models, computation is dominated by a remarkably small number of critical pathways. This is consistent with the hypothesis that large transformers learn modular circuits~\cite{elhage2021} and supports the feasibility of GNOmE at even larger scales.
 
 \section{Ablation: graph structure matters}
 
