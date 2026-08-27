@@ -1,0 +1,83 @@
+{
+  "model": "GPT-2 Small",
+  "params_M": 124.439808,
+  "n_layers": 12,
+  "n_heads": 12,
+  "d_model": 768,
+  "N_components": 144,
+  "base_logit_diff_50": 3.277756805419922,
+  "base_logit_diff_30": 3.3268145243326823,
+  "zero_ablation": {
+    "time_s": 421.65835547447205,
+    "base": 3.3268145243326823
+  },
+  "gnome": {
+    "time_s": 0.019631147384643555
+  },
+  "attribution_patching": {
+    "time_s": 8.650090456008911,
+    "base": 2.0638067881266275
+  },
+  "path_patching": {
+    "time_s": 70.8582854270935,
+    "base": 2.4029209136962892
+  },
+  "correlations": {
+    "gnome_spearman": 0.5575837955148301,
+    "attribution_patching_spearman": -0.016777673738253385,
+    "path_patching_spearman": 0.14239733318059897,
+    "gnome_pearson": 0.6661988912346704,
+    "attribution_patching_pearson": 0.04552025756773109
+  },
+  "speed": {
+    "zero_ablation_s": 421.65835547447205,
+    "gnome_s": 0.019631147384643555,
+    "attribution_patching_s": 8.650090456008911,
+    "path_patching_partial_s": 70.8582854270935
+  },
+  "ioi_recovery": {
+    "za": 0,
+    "gnome": 3,
+    "ap": 2,
+    "total": 7,
+    "by_role": {
+      "duplicate_token": {
+        "za": 0,
+        "gnome": 2,
+        "ap": 1,
+        "total": 3
+      },
+      "s_inhibition": {
+        "za": 0,
+        "gnome": 0,
+        "ap": 0,
+        "total": 1
+      },
+      "name_mover": {
+        "za": 0,
+        "gnome": 1,
+        "ap": 1,
+        "total": 1
+      },
+      "induction": {
+        "za": 0,
+        "gnome": 0,
+        "ap": 0,
+        "total": 2
+      }
+    }
+  },
+  "induction": {
+    "logit_diff": 0.3616003672281901,
+    "known_head_ranks": {
+      "L5_H1": 101,
+      "L6_H9": 84
+    }
+  },
+  "query_complexity": {
+    "N": 144,
+    "path_patching": 20736,
+    "gnome": 1,
+    "speedup": 20736
+  }
+}

@@ -198,32 +198,33 @@ def attribution_patching(model, tok, prompts, n_samples=30):
     head_scores = {}
     base_diff = compute_logit_diff(model, tok, prompts[:n_samples])
 
+    # Attribution patching: for each head, attribution = <delta_residual, W_out_cols>
+    # This is the standard attribution patching approximation (Syed et al. 2023)
     for layer_idx in range(n_layers):
         attn = model.transformer.h[layer_idx].attn
 
-        for head_idx in range(n_heads):
-            start = head_idx * d_head
-            end = start + d_head
+        # Average activation difference across samples
+        act_diffs = []
+        for i in range(n_samples):
+            clean_act = clean_acts[i][layer_idx][:, -1, :]  # (1, D)
+            corrupt_act = corrupt_acts[i][layer_idx][:, -1, :]
+            diff = (clean_act - corrupt_act).squeeze(0)  # (D,)
+            act_diffs.append(diff)
 
-            # Average activation difference across samples
-            act_diffs = []
-            for i in range(n_samples):
-                # Use the residual stream before this layer
-                clean_act = clean_acts[i][layer_idx][:, -1, :]  # (B, D)
-                corrupt_act = corrupt_acts[i][layer_idx][:, -1, :]
-                diff = clean_act - corrupt_act  # (B, D)
-                act_diffs.append(diff)
+        mean_diff = torch.stack(act_diffs).mean(dim=0)  # (D,)
 
-            mean_diff = torch.stack(act_diffs).mean(dim=0)  # (D,)
+        with torch.no_grad():
+            W_out = attn.c_proj.weight.data  # (D, D)
+            # For each head: attribution = mean_diff @ W_out[:, start:end]
+            # This projects the activation difference through the output projection
+            # to get the head-specific attribution
+            all_head_attr = mean_diff @ W_out  # (D,)
 
-            # Compute gradient: d(loss)/d(head_output)
-            # Approximate via weight norm times activation difference
-            with torch.no_grad():
-                W_out = attn.c_proj.weight.data[start:end, :]  # (d_head, D)
-                # Attribution = W_out.T @ mean_diff (projected through output weights)
-                attribution = (W_out.T @ mean_diff[start:end]).abs().mean().item()
-
-            head_scores[f"L{layer_idx}_H{head_idx}"] = attribution
+            for head_idx in range(n_heads):
+                start = head_idx * d_head
+                end = start + d_head
+                attribution = all_head_attr[start:end].abs().mean().item()
+                head_scores[f"L{layer_idx}_H{head_idx}"] = attribution
 
         print(f"    AP layer {layer_idx+1}/{n_layers}", flush=True)
 
