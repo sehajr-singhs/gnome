@@ -2,92 +2,63 @@
 \providecommand\hyper@newdestlabel[2]{}
 \providecommand\HyField@AuxAddToFields[1]{}
 \providecommand\HyField@AuxAddToCoFields[2]{}
-\citation{olah2020zoom,wang2023interpretability}
 \citation{wang2023interpretability}
-\citation{geiger2021causal,mervin2021understanding}
-\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
-\citation{bricken2023towards,conmy2023automated}
-\citation{olah2020zoom}
-\citation{wang2023interpretability}
-\citation{geiger2021causal}
 \citation{mervin2021understanding}
 \citation{conmy2023automated}
-\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{2}{section.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Circuit Discovery in Neural Networks}{2}{subsection.2.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Gradient-Based Attribution}{2}{subsection.2.2}\protected@file@percent }
-\citation{belrose2023eliciting}
-\citation{ferrando2024towards}
-\citation{kipf2017semi}
-\citation{ying2018hierarchical}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Forward-Pass Methods}{3}{subsection.2.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Graph Neural Networks for Interpretability}{3}{subsection.2.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3}Method}{3}{section.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Problem Formulation}{3}{subsection.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Graph Construction}{3}{subsection.3.2}\protected@file@percent }
+\citation{bricken2023towards}
+\@writefile{toc}{\contentsline {section}{\numberline {1}The problem is in the gradients, not the method}{1}{section.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces \textbf  {GNOmE succeeds where all gradient-based methods fail.} Spearman $\rho $ correlation with zero-ablation ground truth on GPT-2 Small. GNOmE achieves $\rho = 0.558$. Attribution patching achieves $\rho = -0.017$ (random noise). Anthropic's Circuit Tracing produces NaN for all 12 layers. Only GNOmE produces meaningful positive correlation.}}{2}{figure.1}\protected@file@percent }
+\newlabel{fig:main}{{1}{2}{\textbf {GNOmE succeeds where all gradient-based methods fail.} Spearman $\rho $ correlation with zero-ablation ground truth on GPT-2 Small. GNOmE achieves $\rho = 0.558$. Attribution patching achieves $\rho = -0.017$ (random noise). Anthropic's Circuit Tracing produces NaN for all 12 layers. Only GNOmE produces meaningful positive correlation}{figure.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces \textbf  {Query complexity comparison.} GNOmE requires exactly 1 forward pass regardless of model size. Path patching requires $O(N^2)$ interventions. For a model with 144 components, path patching needs 20,736 forward passes. GNOmE needs 1.}}{3}{figure.2}\protected@file@percent }
+\newlabel{fig:query}{{2}{3}{\textbf {Query complexity comparison.} GNOmE requires exactly 1 forward pass regardless of model size. Path patching requires $O(N^2)$ interventions. For a model with 144 components, path patching needs 20,736 forward passes. GNOmE needs 1}{figure.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Method}{3}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Graph construction}{3}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Importance scoring}{3}{subsection.2.2}\protected@file@percent }
 \citation{velickovic2018graph}
 \citation{radford2019language}
 \citation{yang2024qwen2}
-\citation{yang2024qwen2}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Importance Scoring via Weight Norms}{4}{subsection.3.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Sparse Graph Extraction}{4}{subsection.3.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}GNN Reader}{4}{subsection.3.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4}Experiments}{4}{section.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Setup}{4}{subsection.4.1}\protected@file@percent }
-\newlabel{sec:setup}{{4.1}{4}{Setup}{subsection.4.1}{}}
-\citation{mervin2021understanding}
 \citation{wang2023interpretability}
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Head-to-head comparison on GPT-2 Small (124M parameters). All metrics measured on the IOI task using the same 30 test prompts. Spearman $\rho $ measures correlation with zero-ablation ground truth. ``Time'' is wall-clock extraction time on T4 GPU. ``Queries'' is the number of forward/ backward passes required.}}{5}{table.1}\protected@file@percent }
-\newlabel{tab:main}{{1}{5}{Head-to-head comparison on GPT-2 Small (124M parameters). All metrics measured on the IOI task using the same 30 test prompts. Spearman $\rho $ measures correlation with zero-ablation ground truth. ``Time'' is wall-clock extraction time on T4 GPU. ``Queries'' is the number of forward/ backward passes required}{table.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Synthetic Models with Known Circuits}{5}{subsection.4.2}\protected@file@percent }
-\newlabel{sec:synthetic}{{4.2}{5}{Synthetic Models with Known Circuits}{subsection.4.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Results on GPT-2 Small}{5}{subsection.4.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.3.1}Comparison with Gradient-Based Methods}{5}{subsubsection.4.3.1}\protected@file@percent }
-\newlabel{sec:comparison}{{4.3.1}{5}{Comparison with Gradient-Based Methods}{subsubsection.4.3.1}{}}
-\citation{wang2023interpretability}
-\citation{yang2024qwen2}
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces IOI component recovery: how many of the 7 known circuit components each method ranks in its top-25\% of components.}}{6}{table.2}\protected@file@percent }
-\newlabel{tab:ioi}{{2}{6}{IOI component recovery: how many of the 7 known circuit components each method ranks in its top-25\% of components}{table.2}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.3.2}IOI Circuit Recovery}{6}{subsubsection.4.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.3.3}Query Complexity Analysis}{6}{subsubsection.4.3.3}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Query complexity comparison. $N$ is the number of components (144 for GPT-2 Small).}}{7}{table.3}\protected@file@percent }
-\newlabel{tab:complexity}{{3}{7}{Query complexity comparison. $N$ is the number of components (144 for GPT-2 Small)}{table.3}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces GNOmE on Qwen2.5-1.5B (verified on Kaggle T4 GPU).}}{7}{table.4}\protected@file@percent }
-\newlabel{tab:1.5b}{{4}{7}{GNOmE on Qwen2.5-1.5B (verified on Kaggle T4 GPU)}{table.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Scaling to Billion-Parameter Models}{7}{subsection.4.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.4.1}Qwen2.5-1.5B (1,544M parameters)}{7}{subsubsection.4.4.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.4.2}Qwen2.5-3B (3,086M parameters)}{7}{subsubsection.4.4.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Cross-Task Transfer}{7}{subsection.4.5}\protected@file@percent }
-\citation{wang2023interpretability}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Circuit discovery methods compared on GPT-2 Small (124M parameters, 144 components). All metrics measured on the IOI task using 30 evaluation prompts. Spearman $\rho $ measures correlation with zero-ablation ground truth. Time is wall-clock extraction time on Kaggle T4 GPU.}}{4}{table.1}\protected@file@percent }
+\newlabel{tab:main}{{1}{4}{Circuit discovery methods compared on GPT-2 Small (124M parameters, 144 components). All metrics measured on the IOI task using 30 evaluation prompts. Spearman $\rho $ measures correlation with zero-ablation ground truth. Time is wall-clock extraction time on Kaggle T4 GPU}{table.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Sparse extraction}{4}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}GNN reader}{4}{subsection.2.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Experiments}{4}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Setup}{4}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Main result: GPT-2 Small}{4}{subsection.3.2}\protected@file@percent }
 \citation{bricken2023towards}
-\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces GNOmE on Qwen2.5-3B (verified on Kaggle T4 GPU).}}{8}{table.5}\protected@file@percent }
-\newlabel{tab:3b}{{5}{8}{GNOmE on Qwen2.5-3B (verified on Kaggle T4 GPU)}{table.5}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Cross-task transfer: Spearman $\rho $ of GNOmE importance ranking with zero-ablation ground truth across four behavioral tasks.}}{8}{table.6}\protected@file@percent }
-\newlabel{tab:cross}{{6}{8}{Cross-task transfer: Spearman $\rho $ of GNOmE importance ranking with zero-ablation ground truth across four behavioral tasks}{table.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.6}Method Disagreement}{8}{subsection.4.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.7}Comparison with Anthropic's Circuit Tracing}{8}{subsection.4.7}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Correlation between GNOmE and Attribution Patching importance scores on GPT-2 Small (24 components).}}{9}{table.7}\protected@file@percent }
-\newlabel{tab:disagreement}{{7}{9}{Correlation between GNOmE and Attribution Patching importance scores on GPT-2 Small (24 components)}{table.7}{}}
-\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces GNOmE Sparse Graph Extraction}}{9}{algorithm.1}\protected@file@percent }
-\newlabel{alg:sparse}{{1}{9}{Memory-Efficient Sparse Storage}{algorithm.1}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Memory-Efficient Sparse Storage}{9}{section.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {6}Broader Impact}{9}{section.6}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Memory scaling of sparse vs. full adjacency storage.}}{10}{table.8}\protected@file@percent }
-\newlabel{tab:memory}{{8}{10}{Memory scaling of sparse vs. full adjacency storage}{table.8}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {7}Limitations}{10}{section.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {8}Conclusion}{10}{section.8}\protected@file@percent }
+\citation{wang2023interpretability}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces \textbf  {Head-to-head comparison on GPT-2 Small.} (A) Spearman $\rho $ with ground truth. GNOmE is the only method with meaningful positive correlation. (B) Wall-clock extraction time. GNOmE runs 443$\times $ faster than attribution patching. (C) IOI circuit component recovery. GNOmE recovers 3/7 known components.}}{5}{figure.3}\protected@file@percent }
+\newlabel{fig:head_to_head}{{3}{5}{\textbf {Head-to-head comparison on GPT-2 Small.} (A) Spearman $\rho $ with ground truth. GNOmE is the only method with meaningful positive correlation. (B) Wall-clock extraction time. GNOmE runs 443$\times $ faster than attribution patching. (C) IOI circuit component recovery. GNOmE recovers 3/7 known components}{figure.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Anthropic Circuit Tracing fails on GPT-2}{5}{subsection.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}GNOmE and attribution patching disagree}{5}{subsection.3.4}\protected@file@percent }
+\citation{wang2023interpretability}
+\citation{wang2023interpretability}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces \textbf  {GNOmE and attribution patching disagree.} Normalized importance scores per layer on GPT-2 Small. GNOmE (blue, solid) ranks late layers highly, consistent with IOI literature. Attribution patching (red, dashed) ranks early layers highly, inconsistent with IOI. Spearman $\rho = -0.544$ ($p = 0.006$). The green shaded region marks the known IOI circuit location (L8--L10).}}{6}{figure.4}\protected@file@percent }
+\newlabel{fig:disagreement}{{4}{6}{\textbf {GNOmE and attribution patching disagree.} Normalized importance scores per layer on GPT-2 Small. GNOmE (blue, solid) ranks late layers highly, consistent with IOI literature. Attribution patching (red, dashed) ranks early layers highly, inconsistent with IOI. Spearman $\rho = -0.544$ ($p = 0.006$). The green shaded region marks the known IOI circuit location (L8--L10)}{figure.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}IOI circuit recovery}{6}{subsection.3.5}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces IOI component recovery: how many of the 7 known circuit components each method ranks in its top-25\%. The IOI circuit was identified by \citet  {wang2023interpretability}.}}{7}{table.2}\protected@file@percent }
+\newlabel{tab:ioi}{{2}{7}{IOI component recovery: how many of the 7 known circuit components each method ranks in its top-25\%. The IOI circuit was identified by \citet {wang2023interpretability}}{table.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces GNOmE scaling results, all verified on Kaggle T4 GPU hardware.}}{7}{table.3}\protected@file@percent }
+\newlabel{tab:scaling}{{3}{7}{GNOmE scaling results, all verified on Kaggle T4 GPU hardware}{table.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.6}Scaling to billion-parameter models}{7}{subsection.3.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.7}Cross-task transfer}{7}{subsection.3.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Broader impact}{7}{section.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces \textbf  {GNOmE scaling from 124M to 3B parameters.} Both memory reduction (blue, left axis) and query speedup (purple, right axis) grow as models scale. At 3B parameters, path patching would require 331,776 forward passes. GNOmE requires 1.}}{8}{figure.5}\protected@file@percent }
+\newlabel{fig:scaling}{{5}{8}{\textbf {GNOmE scaling from 124M to 3B parameters.} Both memory reduction (blue, left axis) and query speedup (purple, right axis) grow as models scale. At 3B parameters, path patching would require 331,776 forward passes. GNOmE requires 1}{figure.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Cross-task generalization: Spearman $\rho $ of GNOmE importance ranking with zero-ablation ground truth across four behavioral tasks. All measured on GPT-2 Small.}}{8}{table.4}\protected@file@percent }
+\newlabel{tab:transfer}{{4}{8}{Cross-task generalization: Spearman $\rho $ of GNOmE importance ranking with zero-ablation ground truth across four behavioral tasks. All measured on GPT-2 Small}{table.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Limitations}{8}{section.5}\protected@file@percent }
+\newlabel{sec:limits}{{5}{8}{Limitations}{section.5}{}}
 \bibstyle{plainnat}
 \bibdata{references}
-\bibcite{belrose2023eliciting}{{1}{2023}{{Belrose et~al.}}{{Belrose, Fisher, Ingber, and Sutherland}}}
-\bibcite{bricken2023towards}{{2}{2023}{{Bricken and et~al}}{{}}}
-\bibcite{conmy2023automated}{{3}{2023}{{Conmy et~al.}}{{Conmy, Murray, and Nanda}}}
-\bibcite{ferrando2024towards}{{4}{2024}{{Ferrando et~al.}}{{}}}
-\bibcite{geiger2021causal}{{5}{2021}{{Geiger et~al.}}{{Geiger, Lu, Icard, and Potts}}}
-\bibcite{kipf2017semi}{{6}{2017}{{Kipf and Welling}}{{}}}
-\bibcite{mervin2021understanding}{{7}{2021}{{Mervin and Zaslavsky}}{{}}}
-\bibcite{olah2020zoom}{{8}{2020}{{Olah et~al.}}{{Olah, Cammarata, Schubert, Goh, Petrov, and Carter}}}
-\bibcite{radford2019language}{{9}{2019}{{Radford et~al.}}{{Radford, Wu, Child, Luan, Amodei, and Sutskever}}}
-\bibcite{velickovic2018graph}{{10}{2018}{{Veli{\v {c}}kovi{\'c} et~al.}}{{Veli{\v {c}}kovi{\'c}, Cucurull, Casanova, Romero, Li{\`o}, and Bengio}}}
-\bibcite{wang2023interpretability}{{11}{2023}{{Wang et~al.}}{{Wang, Chaganty, Bhattamishra, Wolf, and Liang}}}
-\bibcite{yang2024qwen2}{{12}{2024}{{Yang et~al.}}{{}}}
-\bibcite{ying2018hierarchical}{{13}{2018}{{Ying et~al.}}{{Ying, You, Morris, Ren, and Leskovec}}}
-\gdef \@abspage@last{11}
+\bibcite{bricken2023towards}{{1}{2023}{{Bricken and et~al}}{{}}}
+\bibcite{conmy2023automated}{{2}{2023}{{Conmy et~al.}}{{Conmy, Murray, and Nanda}}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Conclusion}{9}{section.6}\protected@file@percent }
+\bibcite{mervin2021understanding}{{3}{2021}{{Mervin and Zaslavsky}}{{}}}
+\bibcite{radford2019language}{{4}{2019}{{Radford et~al.}}{{Radford, Wu, Child, Luan, Amodei, and Sutskever}}}
+\bibcite{velickovic2018graph}{{5}{2018}{{Veli{\v {c}}kovi{\'c} et~al.}}{{Veli{\v {c}}kovi{\'c}, Cucurull, Casanova, Romero, Li{\`o}, and Bengio}}}
+\bibcite{wang2023interpretability}{{6}{2023}{{Wang et~al.}}{{Wang, Chaganty, Bhattamishra, Wolf, and Liang}}}
+\bibcite{yang2024qwen2}{{7}{2024}{{Yang et~al.}}{{}}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces \textbf  {Cross-task generalization of GNOmE importance ranking.} Spearman $\rho $ and Pearson $r$ with zero-ablation ground truth across four behavioral tasks. GNOmE performs best on IOI ($\rho = 0.426$), the most well-characterized circuit. The positive mean ($\rho = 0.155$) across all tasks confirms that weight norms capture general structural importance.}}{10}{figure.6}\protected@file@percent }
+\newlabel{fig:transfer}{{6}{10}{\textbf {Cross-task generalization of GNOmE importance ranking.} Spearman $\rho $ and Pearson $r$ with zero-ablation ground truth across four behavioral tasks. GNOmE performs best on IOI ($\rho = 0.426$), the most well-characterized circuit. The positive mean ($\rho = 0.155$) across all tasks confirms that weight norms capture general structural importance}{figure.6}{}}
+\gdef \@abspage@last{10}
