@@ -138,7 +138,7 @@ Previous Token & L4\_H11, L5\_H5 & 103.5 & 66.3\% & -- \\
 \end{tabular}
 \end{table}
 
-GNOmE recovers 3 of 7 IOI component classes from zero model interventions. The duplicate-token heads (the most important circuit components) rank in the top 6\% of all 156 units, with individual head ranks of 2, 6, and 20. The name-mover head L10\_H0 ranks 15th (top 10\%). Negative name-movers L10\_H7 and L11\_H9 rank 10th and 29th respectively.
+GNOmE recovers 3 of 7 IOI component classes from zero model interventions. The duplicate-token heads (the most important circuit components) rank in the top 6\% of all 156 units, with individual head ranks of 2, 6, and 20. The name-mover head L10\_H0 ranks 15th (top 10\%). Negative name-movers L10\_H7 and L11\_H9 rank 10th and 29th respectively. The full GPT-2 extraction runs in 0.04 seconds versus 399 seconds for zero-ablation, a 9,970$\times$ speedup. The rank correlation between GNOmE importance scores and zero-ablation ground truth on GPT-2 is $r = 0.582$, confirming that graph-based reading captures the same information as iterative ablation.
 
 The three unrecovered classes all share a property: they act on the circuit indirectly. S-inhibition gates and routes signals that other heads read out. Induction heads detect the [A][B]...[A] pattern that initiates the circuit but do not directly contribute to the output copy. Previous-token heads provide a prerequisite representation. Their direct Jacobian contribution to the final prediction is small, which is precisely the regime where single-pass Jacobian attribution is weakest. Causal activation patching on the same GPT-2 model recovers 0 of 7 component classes, confirming that the zero-intervention setting is substantially harder than the patching setting.
 
