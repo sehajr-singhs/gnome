@@ -1,0 +1,24 @@
+{
+  "model": "Qwen2.5-1.5B",
+  "n_layers": 28,
+  "d_model": 1536,
+  "n_heads": 12,
+  "parameters_M": 1543.714304,
+  "load_time": 30.641395092010498,
+  "extract_time": 4.743576288223267,
+  "jacobian_time": 140.84855794906616,
+  "adjacency": {
+    "n_nodes": 364,
+    "n_edges": 37,
+    "density": 0.00027925371331964736,
+    "full_memory_MB": 0.50543212890625,
+    "sparse_memory_MB": 0.00028228759765625,
+    "memory_reduction": 1790.4864864864865,
+    "threshold": 0.9296875,
+    "max_importance": 15.265625,
+    "mean_importance": 0.353515625
+  },
+  "query_speedup": 66066.0,
+  "gpu_memory_GB": 3.354349136352539,
+  "n_prompts": 30
+}

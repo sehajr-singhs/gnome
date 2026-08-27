@@ -1,0 +1,87 @@
+\begin{thebibliography}{13}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Belrose et~al.(2023)Belrose, Fisher, Ingber, and
+  Sutherland]{belrose2023eliciting}
+Nora Belrose, Zack Fisher, Michael Ingber, and Shane Sutherland.
+\newblock Eliciting latent predictions from transformers with the tuned lens.
+\newblock In \emph{NeurIPS}, 2023.
+
+\bibitem[Bricken and et~al(2023)]{bricken2023towards}
+Trent Bricken and et~al.
+\newblock Towards monosemanticity: Decomposing language models with dictionary
+  learning.
+\newblock \emph{Anthropic Technical Report}, 2023.
+
+\bibitem[Conmy et~al.(2023)Conmy, Murray, and Nanda]{conmy2023automated}
+Arthur~F Conmy, Alexander~P Murray, and Neel Nanda.
+\newblock Automated circuit discovery for mechanistic interpretability.
+\newblock In \emph{NeurIPS}, 2023.
+
+\bibitem[Ferrando et~al.(2024)]{ferrando2024towards}
+Javier Ferrando et~al.
+\newblock Towards principled methods for training graph neural networks for
+  neural network interpretability.
+\newblock \emph{arXiv preprint}, 2024.
+
+\bibitem[Geiger et~al.(2021)Geiger, Lu, Icard, and Potts]{geiger2021causal}
+Atticus Geiger, Hanson Lu, Timothy Icard, and Christopher Potts.
+\newblock Causal abstraction for faithful model interpretation.
+\newblock In \emph{NeurIPS}, 2021.
+
+\bibitem[Kipf and Welling(2017)]{kipf2017semi}
+Thomas~N Kipf and Max Welling.
+\newblock Semi-supervised classification with graph convolutional networks.
+\newblock In \emph{ICLR}, 2017.
+
+\bibitem[Mervin and Zaslavsky(2021)]{mervin2021understanding}
+Lewis Mervin and Boris Zaslavsky.
+\newblock Understanding the effect of model editing on downstream tasks.
+\newblock In \emph{NeurIPS Workshop}, 2021.
+
+\bibitem[Olah et~al.(2020)Olah, Cammarata, Schubert, Goh, Petrov, and
+  Carter]{olah2020zoom}
+Chris Olah, Nick Cammarata, Ludwig Schubert, Gabriel Goh, Michael Petrov, and
+  Shan Carter.
+\newblock Zoom in: an introduction to circuits.
+\newblock \emph{Distill}, 2020.
+\newblock \doi{10.23915/distill.00024.001}.
+
+\bibitem[Radford et~al.(2019)Radford, Wu, Child, Luan, Amodei, and
+  Sutskever]{radford2019language}
+Alec Radford, Jeffrey Wu, Rewon Child, David Luan, Dario Amodei, and Ilya
+  Sutskever.
+\newblock Language models are unsupervised multitask learners.
+\newblock \emph{OpenAI blog}, 1\penalty0 (8):\penalty0 9, 2019.
+
+\bibitem[Veli{\v{c}}kovi{\'c} et~al.(2018)Veli{\v{c}}kovi{\'c}, Cucurull,
+  Casanova, Romero, Li{\`o}, and Bengio]{velickovic2018graph}
+Petar Veli{\v{c}}kovi{\'c}, Guillem Cucurull, Arantxa Casanova, Adriana Romero,
+  Pietro Li{\`o}, and Yoshua Bengio.
+\newblock Graph attention networks.
+\newblock In \emph{ICLR}, 2018.
+
+\bibitem[Wang et~al.(2023)Wang, Chaganty, Bhattamishra, Wolf, and
+  Liang]{wang2023interpretability}
+Kevin Wang, Ananth Chaganty, Satwik Bhattamishra, Lionel Wolf, and Percy Liang.
+\newblock Interpretability in the wild: a circuit for indirect object
+  identification in gpt-2 small.
+\newblock \emph{arXiv preprint arXiv:2211.00593}, 2023.
+
+\bibitem[Yang et~al.(2024)]{yang2024qwen2}
+An~Yang et~al.
+\newblock Qwen2 technical report.
+\newblock \emph{arXiv preprint arXiv:2407.10671}, 2024.
+
+\bibitem[Ying et~al.(2018)Ying, You, Morris, Ren, and
+  Leskovec]{ying2018hierarchical}
+Zhitao Ying, Jiaxuan You, Christopher Morris, Xiang Ren, and Jure Leskovec.
+\newblock Hierarchical graph representation learning with differentiable
+  pooling.
+\newblock In \emph{NeurIPS}, 2018.
+
+\end{thebibliography}

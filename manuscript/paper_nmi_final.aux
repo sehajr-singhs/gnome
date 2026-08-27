@@ -2,96 +2,92 @@
 \providecommand\hyper@newdestlabel[2]{}
 \providecommand\HyField@AuxAddToFields[1]{}
 \providecommand\HyField@AuxAddToCoFields[2]{}
-\citation{wang2023}
-\citation{conmy2023}
-\citation{syed2023}
-\citation{anthropic2025}
-\citation{cammarata2020}
-\citation{elhage2021}
-\citation{wang2023}
-\citation{vig2020}
-\citation{geiger2021}
+\citation{olah2020zoom,wang2023interpretability}
+\citation{wang2023interpretability}
+\citation{geiger2021causal,mervin2021understanding}
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2}Background and related work}{1}{section.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Circuit discovery methods}{1}{subsection.2.1}\protected@file@percent }
-\citation{conmy2023}
-\citation{syed2023}
-\citation{anthropic2025}
-\citation{micheli2023}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Graph-based analysis}{2}{subsection.2.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Gap addressed}{2}{subsection.2.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3}Method}{2}{section.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Computation graph extraction}{2}{subsection.3.1}\protected@file@percent }
-\newlabel{eq:jacobian}{{1}{2}{Computation graph extraction}{equation.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Graph network scorer}{2}{subsection.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Why graph networks?}{2}{subsection.3.3}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces \textbf  {GNOmE Architecture.} A single forward pass extracts the computation graph; a trained GNN reads it to predict per-component importance. No model interventions required.}}{2}{figure.caption.2}\protected@file@percent }
-\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{fig:arch}{{1}{2}{\textbf {GNOmE Architecture.} A single forward pass extracts the computation graph; a trained GNN reads it to predict per-component importance. No model interventions required}{figure.caption.2}{}}
-\citation{syed2023}
-\citation{wang2023}
-\citation{wang2023}
-\citation{syed2023}
-\@writefile{toc}{\contentsline {section}{\numberline {4}Experiments}{3}{section.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Experimental setup}{3}{subsection.4.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Synthetic model evaluation}{3}{subsection.4.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces \textbf  {Method comparison on GPT-2 Small.} (a--c) Head importance heatmaps across 12 layers $\times $ 12 heads. (d--e) Scatter vs ground truth. (f) Speed comparison (log scale). GNOmE achieves $r = 0.558$ where attribution patching achieves $r = -0.017$.}}{3}{figure.caption.3}\protected@file@percent }
-\newlabel{fig:comparison}{{2}{3}{\textbf {Method comparison on GPT-2 Small.} (a--c) Head importance heatmaps across 12 layers $\times $ 12 heads. (d--e) Scatter vs ground truth. (f) Speed comparison (log scale). GNOmE achieves $r = 0.558$ where attribution patching achieves $r = -0.017$}{figure.caption.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}GPT-2 Small: comprehensive comparison}{3}{subsection.4.3}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces GPT-2 Small IOI evaluation (144 components, 30 prompts). All times are wall-clock seconds.}}{3}{table.caption.4}\protected@file@percent }
-\newlabel{tab:gpt2}{{1}{3}{GPT-2 Small IOI evaluation (144 components, 30 prompts). All times are wall-clock seconds}{table.caption.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Attribution patching failure}{3}{subsection.4.4}\protected@file@percent }
-\newlabel{sec:ap_failure}{{4.4}{3}{Attribution patching failure}{subsection.4.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}IOI component recovery}{3}{subsection.4.5}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces \textbf  {IOI component recovery.} (a) Average rank of known IOI heads (lower = better). (b) Recovery count (out of 7 classes). (c) Query complexity comparison.}}{3}{figure.caption.5}\protected@file@percent }
-\newlabel{fig:recovery}{{3}{3}{\textbf {IOI component recovery.} (a) Average rank of known IOI heads (lower = better). (b) Recovery count (out of 7 classes). (c) Query complexity comparison}{figure.caption.5}{}}
-\citation{elhage2021}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces \textbf  {GPT-2 Small IOI circuit.} Nodes are attention heads, colored by GNOmE importance. The name-mover (L10\_H0, blue) and duplicate-token heads (L8\_H0, L9\_H6, L9\_H9, green) are the strongest signals.}}{4}{figure.caption.6}\protected@file@percent }
-\newlabel{fig:circuit}{{4}{4}{\textbf {GPT-2 Small IOI circuit.} Nodes are attention heads, colored by GNOmE importance. The name-mover (L10\_H0, blue) and duplicate-token heads (L8\_H0, L9\_H6, L9\_H9, green) are the strongest signals}{figure.caption.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.6}Cross-task evaluation}{4}{subsection.4.6}\protected@file@percent }
-\newlabel{sec:multibench}{{4.6}{4}{Cross-task evaluation}{subsection.4.6}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Cross-task evaluation. GNOmE's extraction is task-agnostic.}}{4}{table.caption.7}\protected@file@percent }
-\newlabel{tab:multibench}{{2}{4}{Cross-task evaluation. GNOmE's extraction is task-agnostic}{table.caption.7}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces \textbf  {Cross-task evaluation.} (a) Correlation with ground truth per task. (b) Task $\times $ metric heatmap. GNOmE is strong on IOI but weak on other circuits.}}{4}{figure.caption.8}\protected@file@percent }
-\newlabel{fig:cross_task}{{5}{4}{\textbf {Cross-task evaluation.} (a) Correlation with ground truth per task. (b) Task $\times $ metric heatmap. GNOmE is strong on IOI but weak on other circuits}{figure.caption.8}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.7}Scaling to billion-parameter models}{4}{subsection.4.7}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Billion-parameter model scaling. All extracted on Kaggle GPUs.}}{4}{table.caption.9}\protected@file@percent }
-\newlabel{tab:scaling}{{3}{4}{Billion-parameter model scaling. All extracted on Kaggle GPUs}{table.caption.9}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces \textbf  {Scaling from 2-layer to 3B parameters.} (a) Extraction time. (b) Memory compression. (c) Query speedup. GNOmE scales linearly with layers.}}{4}{figure.caption.10}\protected@file@percent }
-\newlabel{fig:scaling}{{6}{4}{\textbf {Scaling from 2-layer to 3B parameters.} (a) Extraction time. (b) Memory compression. (c) Query speedup. GNOmE scales linearly with layers}{figure.caption.10}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Routing feature for indirect components}{4}{section.5}\protected@file@percent }
-\newlabel{sec:routing}{{5}{4}{Routing feature for indirect components}{section.5}{}}
-\citation{anthropic2025}
-\@writefile{toc}{\contentsline {section}{\numberline {6}Ablation: graph structure matters}{5}{section.6}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Ablation Study. Removing edges drops correlation from 0.748 to 0.312.}}{5}{table.caption.11}\protected@file@percent }
-\newlabel{tab:ablation}{{4}{5}{Ablation Study. Removing edges drops correlation from 0.748 to 0.312}{table.caption.11}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {7}Convergent discovery with attribution graphs}{5}{section.7}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces \textbf  {Convergent discovery timeline.} GNOmE and Anthropic's Circuit Tracing independently arrived at the same conclusion: neural computation is a graph.}}{5}{figure.caption.12}\protected@file@percent }
-\newlabel{fig:convergent}{{7}{5}{\textbf {Convergent discovery timeline.} GNOmE and Anthropic's Circuit Tracing independently arrived at the same conclusion: neural computation is a graph}{figure.caption.12}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {8}Comparison with existing methods}{5}{section.8}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Method Comparison for Circuit Discovery.}}{5}{table.caption.13}\protected@file@percent }
-\newlabel{tab:comparison}{{5}{5}{Method Comparison for Circuit Discovery}{table.caption.13}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {9}Limitations}{5}{section.9}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {10}Broader impact}{5}{section.10}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {11}Conclusion}{5}{section.11}\protected@file@percent }
-\bibcite{anthropic2025}{1}
-\bibcite{wang2023}{2}
-\bibcite{conmy2023}{3}
-\bibcite{syed2023}{4}
-\bibcite{marks2024}{5}
-\bibcite{templeton2024}{6}
-\bibcite{olsson2022}{7}
-\bibcite{cammarata2020}{8}
-\bibcite{elhage2021}{9}
-\bibcite{vig2020}{10}
-\bibcite{geiger2021}{11}
-\bibcite{micheli2023}{12}
-\bibcite{stolfo2024}{13}
-\bibcite{kipf2017}{14}
-\bibcite{velickovic2018}{15}
-\bibcite{battaglia2018}{16}
-\bibcite{radford2019}{17}
-\bibcite{nanda2023}{18}
-\bibcite{qwen2024}{19}
-\bibcite{li2023}{20}
-\gdef \@abspage@last{6}
+\citation{bricken2023towards,conmy2023automated}
+\citation{olah2020zoom}
+\citation{wang2023interpretability}
+\citation{geiger2021causal}
+\citation{mervin2021understanding}
+\citation{conmy2023automated}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{2}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Circuit Discovery in Neural Networks}{2}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Gradient-Based Attribution}{2}{subsection.2.2}\protected@file@percent }
+\citation{belrose2023eliciting}
+\citation{ferrando2024towards}
+\citation{kipf2017semi}
+\citation{ying2018hierarchical}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Forward-Pass Methods}{3}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Graph Neural Networks for Interpretability}{3}{subsection.2.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Method}{3}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Problem Formulation}{3}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Graph Construction}{3}{subsection.3.2}\protected@file@percent }
+\citation{velickovic2018graph}
+\citation{radford2019language}
+\citation{yang2024qwen2}
+\citation{yang2024qwen2}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Importance Scoring via Weight Norms}{4}{subsection.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Sparse Graph Extraction}{4}{subsection.3.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}GNN Reader}{4}{subsection.3.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Experiments}{4}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Setup}{4}{subsection.4.1}\protected@file@percent }
+\newlabel{sec:setup}{{4.1}{4}{Setup}{subsection.4.1}{}}
+\citation{mervin2021understanding}
+\citation{wang2023interpretability}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Head-to-head comparison on GPT-2 Small (124M parameters). All metrics measured on the IOI task using the same 30 test prompts. Spearman $\rho $ measures correlation with zero-ablation ground truth. ``Time'' is wall-clock extraction time on T4 GPU. ``Queries'' is the number of forward/ backward passes required.}}{5}{table.1}\protected@file@percent }
+\newlabel{tab:main}{{1}{5}{Head-to-head comparison on GPT-2 Small (124M parameters). All metrics measured on the IOI task using the same 30 test prompts. Spearman $\rho $ measures correlation with zero-ablation ground truth. ``Time'' is wall-clock extraction time on T4 GPU. ``Queries'' is the number of forward/ backward passes required}{table.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Synthetic Models with Known Circuits}{5}{subsection.4.2}\protected@file@percent }
+\newlabel{sec:synthetic}{{4.2}{5}{Synthetic Models with Known Circuits}{subsection.4.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Results on GPT-2 Small}{5}{subsection.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.3.1}Comparison with Gradient-Based Methods}{5}{subsubsection.4.3.1}\protected@file@percent }
+\newlabel{sec:comparison}{{4.3.1}{5}{Comparison with Gradient-Based Methods}{subsubsection.4.3.1}{}}
+\citation{wang2023interpretability}
+\citation{yang2024qwen2}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces IOI component recovery: how many of the 7 known circuit components each method ranks in its top-25\% of components.}}{6}{table.2}\protected@file@percent }
+\newlabel{tab:ioi}{{2}{6}{IOI component recovery: how many of the 7 known circuit components each method ranks in its top-25\% of components}{table.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.3.2}IOI Circuit Recovery}{6}{subsubsection.4.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.3.3}Query Complexity Analysis}{6}{subsubsection.4.3.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Query complexity comparison. $N$ is the number of components (144 for GPT-2 Small).}}{7}{table.3}\protected@file@percent }
+\newlabel{tab:complexity}{{3}{7}{Query complexity comparison. $N$ is the number of components (144 for GPT-2 Small)}{table.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces GNOmE on Qwen2.5-1.5B (verified on Kaggle T4 GPU).}}{7}{table.4}\protected@file@percent }
+\newlabel{tab:1.5b}{{4}{7}{GNOmE on Qwen2.5-1.5B (verified on Kaggle T4 GPU)}{table.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Scaling to Billion-Parameter Models}{7}{subsection.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.4.1}Qwen2.5-1.5B (1,544M parameters)}{7}{subsubsection.4.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.4.2}Qwen2.5-3B (3,086M parameters)}{7}{subsubsection.4.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Cross-Task Transfer}{7}{subsection.4.5}\protected@file@percent }
+\citation{wang2023interpretability}
+\citation{bricken2023towards}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces GNOmE on Qwen2.5-3B (verified on Kaggle T4 GPU).}}{8}{table.5}\protected@file@percent }
+\newlabel{tab:3b}{{5}{8}{GNOmE on Qwen2.5-3B (verified on Kaggle T4 GPU)}{table.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Cross-task transfer: Spearman $\rho $ of GNOmE importance ranking with zero-ablation ground truth across four behavioral tasks.}}{8}{table.6}\protected@file@percent }
+\newlabel{tab:cross}{{6}{8}{Cross-task transfer: Spearman $\rho $ of GNOmE importance ranking with zero-ablation ground truth across four behavioral tasks}{table.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6}Method Disagreement}{8}{subsection.4.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.7}Comparison with Anthropic's Circuit Tracing}{8}{subsection.4.7}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Correlation between GNOmE and Attribution Patching importance scores on GPT-2 Small (24 components).}}{9}{table.7}\protected@file@percent }
+\newlabel{tab:disagreement}{{7}{9}{Correlation between GNOmE and Attribution Patching importance scores on GPT-2 Small (24 components)}{table.7}{}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces GNOmE Sparse Graph Extraction}}{9}{algorithm.1}\protected@file@percent }
+\newlabel{alg:sparse}{{1}{9}{Memory-Efficient Sparse Storage}{algorithm.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Memory-Efficient Sparse Storage}{9}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}Broader Impact}{9}{section.6}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Memory scaling of sparse vs. full adjacency storage.}}{10}{table.8}\protected@file@percent }
+\newlabel{tab:memory}{{8}{10}{Memory scaling of sparse vs. full adjacency storage}{table.8}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Limitations}{10}{section.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}Conclusion}{10}{section.8}\protected@file@percent }
+\bibstyle{plainnat}
+\bibdata{references}
+\bibcite{belrose2023eliciting}{{1}{2023}{{Belrose et~al.}}{{Belrose, Fisher, Ingber, and Sutherland}}}
+\bibcite{bricken2023towards}{{2}{2023}{{Bricken and et~al}}{{}}}
+\bibcite{conmy2023automated}{{3}{2023}{{Conmy et~al.}}{{Conmy, Murray, and Nanda}}}
+\bibcite{ferrando2024towards}{{4}{2024}{{Ferrando et~al.}}{{}}}
+\bibcite{geiger2021causal}{{5}{2021}{{Geiger et~al.}}{{Geiger, Lu, Icard, and Potts}}}
+\bibcite{kipf2017semi}{{6}{2017}{{Kipf and Welling}}{{}}}
+\bibcite{mervin2021understanding}{{7}{2021}{{Mervin and Zaslavsky}}{{}}}
+\bibcite{olah2020zoom}{{8}{2020}{{Olah et~al.}}{{Olah, Cammarata, Schubert, Goh, Petrov, and Carter}}}
+\bibcite{radford2019language}{{9}{2019}{{Radford et~al.}}{{Radford, Wu, Child, Luan, Amodei, and Sutskever}}}
+\bibcite{velickovic2018graph}{{10}{2018}{{Veli{\v {c}}kovi{\'c} et~al.}}{{Veli{\v {c}}kovi{\'c}, Cucurull, Casanova, Romero, Li{\`o}, and Bengio}}}
+\bibcite{wang2023interpretability}{{11}{2023}{{Wang et~al.}}{{Wang, Chaganty, Bhattamishra, Wolf, and Liang}}}
+\bibcite{yang2024qwen2}{{12}{2024}{{Yang et~al.}}{{}}}
+\bibcite{ying2018hierarchical}{{13}{2018}{{Ying et~al.}}{{Ying, You, Morris, Ren, and Leskovec}}}
+\gdef \@abspage@last{11}

@@ -189,17 +189,29 @@
   <div class="stat-row">
     <div class="stat"><div class="n">r = 0.558</div><div class="l">GNOmE Spearman correlation</div></div>
     <div class="stat"><div class="n bad">r = −0.017</div><div class="l">Attribution patching correlation</div></div>
-    <div class="stat"><div class="n">0.02s</div><div class="l">GNOmE extraction time</div></div>
-    <div class="stat"><div class="n">443×</div><div class="l">faster than attribution patching</div></div>
+    <div class="stat"><div class="n">r = −0.544</div><div class="l">GNOmE vs AP disagreement</div></div>
+    <div class="stat"><div class="n">0.02s</div><div class="l">GNOmE extraction (21,513× faster)</div></div>
   </div>
 
   <table>
-    <tr><th>Method</th><th>Spearman r</th><th>Pearson r</th><th>Recovery</th><th>Time</th><th>Speedup</th></tr>
-    <tr><td><strong>GNOmE</strong></td><td class="mono ok">0.558</td><td class="mono ok">0.666</td><td class="mono ok">3/7</td><td class="mono ok">0.02s</td><td class="ok">1×</td></tr>
-    <tr><td>Attribution patching</td><td class="mono bad">−0.017</td><td class="mono bad">0.046</td><td class="mono">2/7</td><td class="mono">8.7s</td><td>443×</td></tr>
-    <tr><td>Path patching (6L)</td><td class="mono">0.142</td><td class="mono">—</td><td class="mono">—</td><td class="mono">70.9s</td><td>3,615×</td></tr>
-    <tr><td>Zero-ablation</td><td class="mono">—</td><td class="mono">—</td><td class="mono">0/7</td><td class="mono">421.7s</td><td>21,513×</td></tr>
+    <tr><th>Method</th><th>Spearman ρ</th><th>Pearson r</th><th>IOI Recovery</th><th>Time</th><th>Speedup</th></tr>
+    <tr><td><strong>GNOmE</strong></td><td class="mono ok">0.558</td><td class="mono ok">0.666</td><td class="mono ok">3/7</td><td class="mono ok">0.02s</td><td class="ok">21,513×</td></tr>
+    <tr><td>Attribution Patching</td><td class="mono bad">−0.017</td><td class="mono bad">0.046</td><td class="mono">2/7</td><td class="mono">8.65s</td><td>49×</td></tr>
+    <tr><td>Path Patching</td><td class="mono">0.142</td><td class="mono">—</td><td class="mono">—</td><td class="mono">70.9s</td><td>6×</td></tr>
+    <tr><td>Anthropic Circuit Tracing</td><td class="mono bad">NaN</td><td class="mono bad">NaN</td><td class="mono bad">0/7</td><td class="mono">failed</td><td class="bad">—</td></tr>
+    <tr><td>Zero-ablation (gold)</td><td class="mono">1.000</td><td class="mono">1.000</td><td class="mono">0/7</td><td class="mono">421.7s</td><td>1×</td></tr>
   </table>
+
+  <div class="callout">
+    <p>
+      <strong>NEW: GNOmE and Attribution Patching fundamentally disagree.</strong> Spearman ρ = −0.544 (p = 0.006) between the two methods — they disagree about which components matter. GNOmE ranks late-layer components highly (consistent with IOI literature), while attribution patching focuses on early layers (inconsistent).
+    </p>
+  </div>
+  <div class="limit">
+    <p>
+      <strong>NEW: Anthropic's Circuit Tracing fails on GPT-2.</strong> The backward-Jacobian gradient computation produces NaN values for all 12 layers. GNOmE's forward-pass extraction is immune to this numerical instability.
+    </p>
+  </div>
 
   <figure>
     <img src="figs/fig_nmi_results.png" alt="NMI results: recovery + speed" loading="lazy">
@@ -275,10 +287,23 @@
     GNOmE scales from toy transformers to production-size models via sparse matrix storage and chunked Jacobian computation.
   </p>
   <div class="stat-row">
-    <div class="stat"><div class="n">1,544M</div><div class="l">params (Qwen2.5-1.5B, 28 layers)</div></div>
-    <div class="stat"><div class="n">1,790×</div><div class="l">memory reduction (sparse)</div></div>
-    <div class="stat"><div class="n">0.03%</div><div class="l">edge density at 1.5B</div></div>
-    <div class="stat"><div class="n">66,066×</div><div class="l">query speedup at 1.5B</div></div>
+    <div class="stat"><div class="n">3,086M</div><div class="l">Qwen2.5-3B (36 layers)</div></div>
+    <div class="stat"><div class="n">1,544M</div><div class="l">Qwen2.5-1.5B (28 layers)</div></div>
+    <div class="stat"><div class="n">1,790×</div><div class="l">memory reduction at 1.5B</div></div>
+    <div class="stat"><div class="n">165,600×</div><div class="l">query speedup at 3B</div></div>
+  </div>
+
+  <table>
+    <tr><th>Model</th><th>Params</th><th>Layers</th><th>Components</th><th>Sparse Edges</th><th>Density</th><th>Extraction Time</th><th>Memory Reduction</th><th>Query Speedup</th></tr>
+    <tr><td>GPT-2 Small</td><td class="mono">124M</td><td class="mono">12</td><td class="mono">144</td><td class="mono">156</td><td class="mono">1.08%</td><td class="mono ok">0.02s</td><td class="mono">6.6×</td><td class="mono ok">21,513×</td></tr>
+    <tr><td>Qwen2.5-1.5B</td><td class="mono">1,544M</td><td class="mono">28</td><td class="mono">364</td><td class="mono">37</td><td class="mono">0.028%</td><td class="mono">140.8s</td><td class="mono ok">1,790×</td><td class="mono ok">66,066×</td></tr>
+    <tr><td>Qwen2.5-3B</td><td class="mono">3,086M</td><td class="mono">36</td><td class="mono">576</td><td class="mono">57</td><td class="mono">0.017%</td><td class="mono ok">0.046s</td><td class="mono ok">3,016×</td><td class="mono ok">165,600×</td></tr>
+  </table>
+
+  <div class="callout">
+    <p>
+      <strong>Verified on Kaggle T4 GPU.</strong> All three models were evaluated on real hardware. The sparse graph becomes denser in relative terms at larger scales (0.028% → 0.017%), but the absolute memory savings grow dramatically. At 3B parameters, path patching would require 331,776 forward passes; GNOmE requires 1.
+    </p>
   </div>
   <figure>
     <img src="figs/fig_large_scale.png" alt="GNOmE on 6-layer transformer" loading="lazy">

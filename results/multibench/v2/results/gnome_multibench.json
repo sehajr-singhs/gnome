@@ -1,0 +1,36 @@
+{
+  "model": "GPT-2 Small",
+  "params_M": 124.439808,
+  "N_components": 144,
+  "gnome_time_s": 0.08594679832458496,
+  "tasks": {
+    "ioi": {
+      "base_metric": 3.9446067810058594,
+      "za_time_s": 253.60684514045715,
+      "gnome_spearman": 0.425552608311229,
+      "gnome_pearson": 0.5533354840480337
+    },
+    "induction": {
+      "base_metric": -0.16255626678466797,
+      "za_time_s": 209.96902537345886,
+      "gnome_spearman": 0.0067831774384042925,
+      "gnome_pearson": 0.11382189274115753
+    },
+    "dedup": {
+      "base_metric": 2.06915283203125,
+      "za_time_s": 197.2951855659485,
+      "gnome_spearman": 0.021087381035335962,
+      "gnome_pearson": 0.059899741491440395
+    },
+    "greater_than": {
+      "base_metric": 0.10332069396972657,
+      "za_time_s": 199.0475435256958,
+      "gnome_spearman": 0.16476664999021354,
+      "gnome_pearson": 0.11121145093866709
+    }
+  },
+  "cross_task": {
+    "mean_spearman": 0.1545474541937957,
+    "mean_pearson": 0.20956714230482468
+  }
+}
