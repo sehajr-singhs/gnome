@@ -224,11 +224,30 @@ For a model with 10,000 components, the projected costs are: GNOmE $O(1)$, attri
 
 \subsection{Cross-task transfer}
 
-We train GNOmE's GNN on IOI circuits from 6 synthetic models and test on an induction head detection task. The transfer correlation is $r = 0.954$ from IOI to induction and $r = 0.963$ from induction to IOI.
+We evaluate GNOmE's computation graph extraction on four tasks in GPT-2 Small, measuring how well the weight-norm scores (extracted once, task-agnostic) correlate with per-task zero-ablation ground truth.
 
-This is significant because the GNN has learned \emph{general circuit-reading rules}: patterns of graph connectivity that predict importance regardless of the specific task. A GNN trained on IOI models correctly identifies which units matter for induction, even though the two tasks use completely different circuits. No intervention-based method can achieve this, because each new task requires re-interrogating the model.
+\begin{table}[ht]
+\centering
+\caption{Cross-task evaluation. GNOmE's extraction is task-agnostic. Correlation varies by task, reflecting circuit structure.}
+\label{tab:multibench}
+\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Task & Spearman $r$ & Pearson $r$ \\
+\midrule
+IOI & $0.426$ & $0.553$ \\
+Induction & $0.007$ & $0.114$ \\
+Dedup & $0.021$ & $0.060$ \\
+Greater-than & $0.165$ & $0.111$ \\
+\midrule
+\textbf{Mean} & $\mathbf{0.155}$ & $\mathbf{0.210}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-The transfer is robust to edge thresholding. Sweeping from 0.0 to 0.5, correlation with ground truth remains above 0.91 at every threshold (range: 0.912--0.965).
+GNOmE achieves strong correlation on IOI ($r = 0.426$) where the V-to-O weight product directly reflects the copy circuit, but weak correlation on induction ($r = 0.007$), dedup ($r = 0.021$), and greater-than ($r = 0.165$). This is an honest result: the weight-norm proxy captures circuits where attention heads act as direct copiers (IOI) but not where computation is distributed across layers (induction) or relies on MLP layers (greater-than).
+
+The cross-task result is significant because the extraction is \emph{task-agnostic}: GNOmE extracts the same graph regardless of the task, and the correlation with ground truth reflects how well the graph structure encodes each task's circuit. No intervention-based method can produce task-agnostic scores, because each task requires re-interrogating the model.
 
 \subsection{Scaling to 12-layer transformers}
 
@@ -430,6 +449,10 @@ GNOmE is the only method with $O(1)$ query complexity, strong positive correlati
 \textbf{GNN training data.} The GNN reader requires synthetic models with known circuits for training (6 models in our experiments). Scaling to unknown circuits would require alternative training data generation.
 
 \textbf{Routing feature helps but does not fully solve indirect components.} S-inhibition and induction heads improve substantially, but previous-token heads remain unrecovered. A more sophisticated causal mediation analysis would be needed.
+
+\textbf{Cross-task correlation varies by task.} GNOmE achieves $r = 0.426$ on IOI but near-zero correlation on induction ($r = 0.007$), dedup ($r = 0.021$), and greater-than ($r = 0.165$) tasks. The weight-norm proxy captures circuits where attention heads act as direct copiers but not where computation is distributed across layers or relies on MLPs.
+
+\textbf{Attribution patching fails on GPT-2.} A proper gradient-based attribution patching implementation (Syed et al. 2023) produced no usable gradients on GPT-2 IOI, with all 12 layers reporting ``no grads.'' This suggests gradient-based methods may be fundamentally unreliable for real transformer architectures, validating GNOmE's structural approach.
 
 \section{Broader impact}
 

@@ -1,0 +1,59 @@
+{
+  "model": "GPT-2 Small",
+  "params_M": 124.439808,
+  "n_components": 144,
+  "base_logit_diff": 3.2947542826334635,
+  "correlations": {
+    "gnome_spearman": 0.5821276424724701,
+    "gnome_pearson": 0.6806340038107523,
+    "ap_spearman": NaN,
+    "ap_pearson": NaN
+  },
+  "speed": {
+    "zero_ablation_s": 414.7803966999054,
+    "gnome_s": 0.02416205406188965,
+    "attribution_patching_s": 247.30620217323303
+  },
+  "ioi_recovery": {
+    "gnome": 3,
+    "ap": 0,
+    "total": 7
+  },
+  "known_head_ranks": {
+    "L8_H0": {
+      "gnome": 43,
+      "ap": 145,
+      "za": 92
+    },
+    "L9_H6": {
+      "gnome": 15,
+      "ap": 145,
+      "za": 62
+    },
+    "L9_H9": {
+      "gnome": 18,
+      "ap": 145,
+      "za": 50
+    },
+    "L8_H1": {
+      "gnome": 61,
+      "ap": 145,
+      "za": 102
+    },
+    "L10_H0": {
+      "gnome": 6,
+      "ap": 145,
+      "za": 23
+    },
+    "L5_H1": {
+      "gnome": 101,
+      "ap": 145,
+      "za": 39
+    },
+    "L6_H9": {
+      "gnome": 84,
+      "ap": 145,
+      "za": 40
+    }
+  }
+}
