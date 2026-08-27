@@ -1,0 +1,42 @@
+{
+  "gpt2": {
+    "model": "gpt2",
+    "params_M": 124.439808,
+    "N": 144,
+    "zero_ablation": {
+      "time_s": 405.81943821907043,
+      "base": 3.2947479248046876
+    },
+    "gnome": {
+      "time_s": 0.022639989852905273
+    },
+    "anthropic": {
+      "time_s": 106.11964774131775
+    },
+    "path_patching": {
+      "time_s": 68.05737352371216
+    },
+    "correlations": {
+      "GNOmE": {
+        "spearman": 0.5821276424724701,
+        "pearson": 0.6806325854956758
+      },
+      "Anthropic CT": {
+        "spearman": NaN,
+        "pearson": NaN
+      }
+    },
+    "ioi_recovery": {
+      "gnome": 3,
+      "anthropic": 0,
+      "za": 1,
+      "total": 7
+    },
+    "speed": {
+      "zero_ablation_s": 405.81943821907043,
+      "gnome_s": 0.022639989852905273,
+      "anthropic_ct_s": 106.11964774131775,
+      "path_patching_s": 68.05737352371216
+    }
+  }
+}
