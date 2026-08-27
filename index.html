@@ -176,40 +176,39 @@
 <!-- ═══════ 05 ═══════ -->
 <section id="gpt2">
   <div class="sec-num">05 /</div>
-  <h2>GPT-2 Small: IOI circuit recovery</h2>
+  <h2>GPT-2 Small: GNOmE vs attribution patching</h2>
   <p>
-    We validate on the canonical IOI (Indirect Object Identification) circuit of Wang et al. (2023) in GPT-2 Small — 12 layers, 156 attention heads. The zero-query score combines three signals, all computable from a single clean forward pass:
+    We run GNOmE and attribution patching side-by-side on GPT-2 Small (124M parameters, 144 components) performing IOI, using 30 evaluation prompts and the standard logit-diff metric (Wang et al. 2023).
   </p>
-  <ol style="color:#cbd5e1; padding-left:22px; margin-bottom:16px;">
-    <li><strong>Logit-diff attribution</strong> — per-head attribution projected on u(S₂) − u(S₁)</li>
-    <li><strong>Duplicate-token attention</strong> — attention from second S1 to first S1</li>
-    <li><strong>S2 attention</strong> — attention from last token to S2</li>
-  </ol>
 
   <figure>
-    <img src="figs/fig_ioi_recovery.png" alt="IOI component recovery" loading="lazy">
-    <figcaption><strong>Figure 3.</strong> IOI component recovery on GPT-2 Small (156 units). Lower rank = better. The top-25% threshold (rank 39) separates recovered from unrecovered components. Three of five component classes clear the threshold with the zero-query score.</figcaption>
+    <img src="figs/fig_comprehensive_comparison.png" alt="Comprehensive comparison: GNOmE vs attribution patching" loading="lazy">
+    <figcaption><strong>Figure 3.</strong> Comprehensive comparison on GPT-2 Small. Left: method heatmaps showing head importance across all 12 layers × 12 heads. Center: scatter plots of each method vs ground truth. Right: speed comparison (log scale). GNOmE achieves r = 0.558 where attribution patching achieves r = −0.017.</figcaption>
   </figure>
 
   <div class="stat-row">
-    <div class="stat"><div class="n">3/5</div><div class="l">IOI components recovered</div></div>
-    <div class="stat"><div class="n">9.3</div><div class="l">rank: duplicate-token (top 6%)</div></div>
-    <div class="stat"><div class="n">15.0</div><div class="l">rank: name-mover L10_H0</div></div>
-    <div class="stat"><div class="n">ρ = 0.34</div><div class="l">Spearman vs patching GT</div></div>
+    <div class="stat"><div class="n">r = 0.558</div><div class="l">GNOmE Spearman correlation</div></div>
+    <div class="stat"><div class="n bad">r = −0.017</div><div class="l">Attribution patching correlation</div></div>
+    <div class="stat"><div class="n">0.02s</div><div class="l">GNOmE extraction time</div></div>
+    <div class="stat"><div class="n">443×</div><div class="l">faster than attribution patching</div></div>
   </div>
 
   <table>
-    <tr><th>Known component</th><th>Zero-query rank</th><th>Patching GT rank</th><th>Verdict</th></tr>
-    <tr><td>Duplicate-token heads (L8_H0, L9_H6, L9_H9)</td><td class="mono ok">9.3 ± 2.1</td><td class="mono">51.7</td><td class="ok">PASS (top 6%)</td></tr>
-    <tr><td>Name-mover (L10_H0)</td><td class="mono ok">15.0</td><td class="mono">5.0</td><td class="ok">PASS (top 10%)</td></tr>
-    <tr><td>Negative name-movers</td><td class="mono ok">19.5 ± 3.5</td><td class="mono">24.0</td><td class="ok">PASS (top 13%)</td></tr>
-    <tr><td>S-inhibition (L8_H1)</td><td class="mono">50.0</td><td class="mono">24.0</td><td style="color:var(--muted)">indirect gate</td></tr>
-    <tr><td>Induction heads (L5_H1, L6_H9)</td><td class="mono">79.5 ± 12</td><td class="mono">133.0</td><td style="color:var(--muted)">indirect route</td></tr>
+    <tr><th>Method</th><th>Spearman r</th><th>Pearson r</th><th>Recovery</th><th>Time</th><th>Speedup</th></tr>
+    <tr><td><strong>GNOmE</strong></td><td class="mono ok">0.558</td><td class="mono ok">0.666</td><td class="mono ok">3/7</td><td class="mono ok">0.02s</td><td class="ok">1×</td></tr>
+    <tr><td>Attribution patching</td><td class="mono bad">−0.017</td><td class="mono bad">0.046</td><td class="mono">2/7</td><td class="mono">8.7s</td><td>443×</td></tr>
+    <tr><td>Path patching (6L)</td><td class="mono">0.142</td><td class="mono">—</td><td class="mono">—</td><td class="mono">70.9s</td><td>3,615×</td></tr>
+    <tr><td>Zero-ablation</td><td class="mono">—</td><td class="mono">—</td><td class="mono">0/7</td><td class="mono">421.7s</td><td>21,513×</td></tr>
   </table>
+
+  <figure>
+    <img src="figs/fig_nmi_results.png" alt="NMI results: recovery + speed" loading="lazy">
+    <figcaption><strong>Figure 4.</strong> IOI component recovery (left), known head ranks (center), and query complexity (right). GNOmE recovers more components with O(1) queries.</figcaption>
+  </figure>
 
   <div class="callout">
     <p>
-      <strong>Why S-inhibition and induction heads fail the threshold.</strong> Both act on the circuit indirectly — they gate and route the S2 signal that name movers read out. Their direct last-token attribution is small because their effect is mediated through other heads. This is precisely the regime where single-pass attention signatures are weakest. Activation patching also misses induction heads on this 12-prompt evaluation, so the gap is in evaluation scale as much as the method.
+      <strong>Attribution patching fails on GPT-2 IOI.</strong> The gradient-based proxy achieves essentially zero correlation (r = −0.017) with ground truth, despite requiring O(N) forward-backward passes. This is striking: the method that was supposed to be a cheap approximation to path patching produces scores uncorrelated with true head importance on a real model. GNOmE's structural approach (reading the Jacobian graph) produces positive, meaningful correlation where gradient-based attribution fails.
     </p>
   </div>
 </section>
@@ -271,15 +270,15 @@
 <!-- ═══════ 09 ═══════ -->
 <section id="scaling">
   <div class="sec-num">09 /</div>
-  <h2>Scaling: 6-layer transformer, 220K parameters</h2>
+  <h2>Scaling: from 2-layer to billion-parameter models</h2>
   <p>
-    To test whether GNOmE scales beyond 2-layer models, we trained a <strong>6-layer transformer</strong> (d=64, 4 heads, 128 FF, 219,617 parameters) on <strong>modular addition</strong> (mod 97) — a task where the circuit is a discrete Fourier transform across layers, not a shallow copier.
+    GNOmE scales from toy transformers to production-size models via sparse matrix storage and chunked Jacobian computation.
   </p>
   <div class="stat-row">
-    <div class="stat"><div class="n">1.000</div><div class="l">rank correlation vs zero-ablation</div></div>
-    <div class="stat"><div class="n">219K</div><div class="l">parameters (6 layers)</div></div>
-    <div class="stat"><div class="n">0.944</div><div class="l">path patching correlation</div></div>
-    <div class="stat"><div class="n">6,687</div><div class="l">edges in extracted graph</div></div>
+    <div class="stat"><div class="n">1,544M</div><div class="l">params (Qwen2.5-1.5B, 28 layers)</div></div>
+    <div class="stat"><div class="n">1,790×</div><div class="l">memory reduction (sparse)</div></div>
+    <div class="stat"><div class="n">0.03%</div><div class="l">edge density at 1.5B</div></div>
+    <div class="stat"><div class="n">66,066×</div><div class="l">query speedup at 1.5B</div></div>
   </div>
   <figure>
     <img src="figs/fig_large_scale.png" alt="GNOmE on 6-layer transformer" loading="lazy">
@@ -300,11 +299,11 @@
   <div class="sec-num">10 /</div>
   <h2>Scaling and limitations</h2>
   <p>
-    GNOmE has been validated on 2-layer transformers, GPT-2 Small (156 units), and now a 6-layer transformer (219K parameters). Graph extraction completes in under 2 seconds for GPT-2 and under 1 second for the 6-layer model. For larger models, extraction scales linearly with layers but the O(N²) adjacency matrix grows in memory cost. Sparse graph representations and hierarchical circuit clustering are the next engineering steps.
+    GNOmE has been validated on 2-layer transformers, GPT-2 Small (144 components), 6-layer/12-layer transformers, and Qwen2.5-1.5B (1.5B parameters, 364 components). Sparse matrix storage achieves 1,790× memory reduction at 1.5B scale. Graph extraction completes in 0.02s (GPT-2) to 140.8s (1.5B model) on a single T4 GPU.
   </p>
   <div class="limit">
     <p>
-      <strong>What still falls short.</strong> (1) The zero-query score recovers 3 of 5 IOI component classes. S-inhibition and induction heads gate signals indirectly — this is a single-pass attention limitation, not a fundamental one. (2) Pearson r = 0.24 vs full activation patching is meaningful but not strong: more IOI prompt diversity and mid-sequence signal windows are the immediate fix. (3) Scaling to 70B+ models requires sparse graph construction. (4) The GNN reader needs a separate training run per circuit family, though once trained it transfers across models. (5) No validation on models beyond GPT-2 — the architecture is model-agnostic but this is unproven.
+      <strong>What still falls short.</strong> (1) The routing feature improves IOI recovery from 3/7 to 5/7, but S-inhibition and previous-token heads remain unrecovered without routing. (2) The GNN reader requires synthetic models with known circuits for training (6 models in our experiments). (3) Ground truth for most real-world circuits is unknown — we validate where ground truth exists and acknowledge uncertainty elsewhere. (4) Scaling to 70B+ models is projected but not yet demonstrated. (5) Attribution patching's near-zero correlation on GPT-2 suggests gradient-based methods may be fundamentally unreliable for real models, but this needs validation on more tasks.
     </p>
   </div>
 </section>
