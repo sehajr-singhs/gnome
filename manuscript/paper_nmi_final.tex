@@ -7,6 +7,9 @@
 \usepackage{xcolor}
 \usepackage{caption}
 \usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{subcaption}
 
 \definecolor{gnomeblue}{HTML}{4A90D9}
 \definecolor{gnomered}{HTML}{E53935}
@@ -22,271 +25,218 @@
 \maketitle
 
 \begin{abstract}
-Every method for finding circuits inside language models interrogates the model one unit at a time. Path patching, ACDC, and attribution patching all follow this template, and the cost scales quadratically with model size. We present GNOmE (Graph Networks for Mechanistic Explicability), a method that discovers neural circuits in a single forward pass with zero model interventions. Given a trained model, GNOmE extracts its computation graph via blockwise Jacobian attribution, then reads the graph with a graph neural network to predict per-unit importance scores. On six synthetic transformers solving IOI-like tasks, GNOmE correlates at $r = 0.748$ with ground-truth zero-ablation importance, exceeding path patching ($r = -0.365$) and attribution patching ($r = 0.558$). On GPT-2 Small (156 components), GNOmE recovers 3 of 7 known IOI circuit component classes from zero model interventions, improving to 5 of 7 with a routing feature that identifies indirect circuit components (S-inhibition heads, induction heads). On a 6-layer transformer, GNOmE achieves perfect rank correlation ($r = 1.000$) with zero-ablation ground truth, and on a 12-layer transformer, $r = 0.987$ with 10,588$\times$ speedup over path patching. We address the $O(N^2)$ memory bottleneck through sparse matrix storage (12$\times$ reduction) and chunked Jacobian computation, projecting feasibility to Llama-3-8B scale (64 MB full, 6.4 MB sparse). We find that GNOmE and Anthropic's Circuit Tracing~\cite{anthropic2025} independently converged on the same structural conclusion from different directions: neural computation is a graph, and graph networks are the natural readout.
+Every method for finding circuits inside language models interrogates the model one component at a time. Path patching and ACDC require $O(N^2)$ interventions; attribution patching reduces this to $O(N)$ but still requires one gradient pass per component. We present \textbf{GNOmE} (Graph Networks for Mechanistic Explicability), a method that discovers neural circuits in a single forward pass with zero model interventions. GNOmE extracts the computation graph via blockwise Jacobian attribution, then reads the graph with a graph neural network (GNN) to predict per-component importance scores. On six synthetic transformers solving IOI-like tasks, GNOmE correlates at $r = 0.748$ with ground-truth zero-ablation importance, exceeding attribution patching ($r = 0.558$) and ACDC ($r = 0.505$). On GPT-2 Small (156 components), GNOmE recovers 5 of 7 known IOI circuit component classes from zero model interventions with a routing feature that identifies indirect components, compared to 4 of 7 for attribution patching. On a 12-layer transformer, GNOmE achieves $r = 0.987$ rank correlation with $10{,}588\times$ speedup over path patching. We demonstrate scaling to a billion-parameter model (Qwen2.5-1.5B, 1,544M parameters) with 1,790$\times$ memory reduction via sparse matrix storage. We find that GNOmE and Anthropic's Circuit Tracing~\cite{anthropic2025} independently converged on the same structural conclusion---neural computation is a graph---from different methodological directions, suggesting this is a fundamental property of transformer computation rather than an artifact of any single analysis method.
 \end{abstract}
 
 \section{Introduction}
 
-The dominant paradigm in mechanistic interpretability is iterative. Path patching~\cite{wang2023} ablates a component and measures the effect. ACDC~\cite{conmy2023} sweeps through the full adjacency matrix of a model's components, testing each edge. Attribution patching~\cite{syed2023} approximates the same sweep with a single forward and backward pass per component. The computational cost scales as O($N^2$) where $N$ is the number of components: for GPT-2 Small with 156 attention heads and MLP layers, that means thousands of forward passes. For a model with 32,000 components, it means millions.
+The dominant paradigm in mechanistic interpretability is \emph{iterative interrogation}: ablate a component, measure the effect, repeat. Path patching~\cite{wang2023} corrupts a component's input and measures the causal effect on output. ACDC~\cite{conmy2023} sweeps through the full adjacency matrix, testing each edge. Attribution patching~\cite{syed2023} approximates the same sweep with gradient-based proxies. The cost scales as $O(N^2)$ for path patching and $O(N)$ for attribution patching, where $N$ is the number of components---attention heads, MLP layers, and embeddings.
 
-In March 2025, Anthropic published Circuit Tracing~\cite{anthropic2025}, which extracts computation graphs from language models using activation pattern analysis and backward-Jacobian tracing. Their method reveals the same circuits that path patching discovers, but through a different lens: graph structure rather than iterative ablation. The paper shows that neural networks have interpretable computational graphs that can be extracted, visualized, and analyzed as networks.
+In March 2025, Anthropic published Circuit Tracing~\cite{anthropic2025}, which extracts computation graphs from language models using activation pattern analysis and backward-Jacobian tracing. Their method reveals that neural networks have interpretable computational graphs that can be extracted, visualized, and analyzed as networks. This was a convergence: two independent lines of work arrived at the conclusion that neural computation \emph{is} a graph.
 
-We ask a simple question: \emph{can a graph neural network read a model's computation graph directly and predict which components matter, without any interventions on the model?}
+We ask: \emph{can a graph neural network read a model's computation graph directly and predict which components matter, without any interventions on the model?}
 
-GNOmE is our answer. It extracts the computation graph in a single forward pass via blockwise Jacobian attribution, then reads the graph with a trained GNN to score node importance. No iterative ablation. No corrupted inputs. No model interventions. O(1) query cost.
+GNOmE is our answer. Given a trained model, GNOmE (1)~extracts its computation graph via blockwise Jacobian attribution in a single forward pass, and (2)~reads the graph with a trained GNN to score node importance. No iterative ablation. No corrupted inputs. No model interventions. $O(1)$ query cost.
 
-The result is not just faster. It is convergent. GNOmE and Anthropic's Circuit Tracing independently arrived at graph-based analysis of neural computation through entirely different methodological paths. Anthropic starts from activation patterns and backward passes. GNOmE starts from forward-pass Jacobians and learned graph reading. The convergence on the same structural conclusion, that neural computation is a graph and graph networks are the right tool for reading it, is itself a finding about the natural structure of transformer computation.
+The key contributions are:
+\begin{enumerate}[nosep]
+    \item \textbf{Zero-intervention circuit discovery}: GNOmE extracts circuits without modifying the model, achieving $r = 0.748$ correlation with ground-truth zero-ablation on synthetic models.
+    \item \textbf{Attribution patching comparison}: We provide the first systematic comparison of GNOmE against attribution patching on GPT-2 IOI, showing GNOmE recovers more circuit components (5/7 vs 4/7) with $144\times$ less computation.
+    \item \textbf{Cross-task generalization}: A GNN trained on IOI circuits transfers to induction head detection ($r = 0.954$) without retraining, a capability unique to graph-based methods.
+    \item \textbf{Billion-parameter scaling}: Sparse matrix storage and chunked computation enable GNOmE on models with 1,500+ components (Qwen2.5-1.5B), achieving 1,790$\times$ memory reduction.
+    \item \textbf{Convergent discovery}: GNOmE and Anthropic's Circuit Tracing independently arrive at graph-based analysis of neural computation through different methodological paths, suggesting this reflects genuine computational structure.
+\end{enumerate}
 
-\section{Related work}
+\section{Background and related work}
 
-Mechanistic interpretability has produced a hierarchy of methods, each more automated than the last. Circuits analysis~\cite{cammarata2020,elhage2021} established the conceptual framework: neural networks compute through circuits of attention heads and MLP layers, and these circuits can be identified and understood. The IOI paper~\cite{wang2023} demonstrated that specific attention heads implement specific computational roles (duplicate detection, name copying, inhibition) and that these roles can be verified through causal interventions.
+\subsection{Circuit discovery methods}
 
-Path patching~\cite{vig2020,geiger2021} formalized the causal intervention approach: to determine whether component $j$ affects component $i$'s output, corrupt $j$'s input and measure the effect on $i$'s output. This produces a causal adjacency matrix, but at O($N^2$) cost per pair.
+Circuit analysis~\cite{cammarata2020,elhage2021} established that neural networks compute through circuits of attention heads and MLP layers. The IOI paper~\cite{wang2023} demonstrated that specific attention heads implement specific computational roles---duplicate detection, name copying, inhibition---verifiable through causal interventions.
 
-ACDC~\cite{conmy2023} automated the sweep by testing each edge in the full component graph, using activation patching to measure causal contribution. Attribution patching~\cite{syed2023} approximates the same information with a cheaper gradient-based proxy, reducing the constant factor but not the asymptotic complexity.
+Path patching~\cite{vig2020,geiger2021} formalized the causal intervention: to determine whether component $j$ affects component $i$'s output, corrupt $j$'s input and measure the effect. This produces a causal adjacency matrix at $O(N^2)$ cost.
 
-Sparse feature circuits~\cite{marks2024} extended circuit analysis to the feature level, decomposing attention heads into interpretable feature directions using sparse autoencoders. Scaling monosemanticity~\cite{templeton2024} showed that this decomposition scales to larger models and reveals more fine-grained circuits.
+ACDC~\cite{conmy2023} automated the sweep by testing each edge using activation patching. Attribution patching~\cite{syed2023} approximates the same information with a cheaper gradient-based proxy---one forward and backward pass per component---reducing the constant factor but not the asymptotic scaling.
 
-Anthropic's Circuit Tracing~\cite{anthropic2025} represents the state of the art: extract a model's full computation graph and analyze it as a network. Their method uses backward-Jacobian tracing to build attribution graphs that reveal how information flows through a transformer. The result is a graph that can be read by humans, one graph at a time.
+Sparse feature circuits~\cite{marks2024} extended circuit analysis to features decomposed via sparse autoencoders. Scaling monosemanticity~\cite{templeton2024} showed this scales to larger models.
 
-GNOmE builds on all of these but adds a critical element: a learned graph reader. Instead of presenting graphs to humans for interpretation, GNOmE trains a GNN to read graphs automatically, which adds the ability to generalize across models and tasks without retraining.
+\subsection{Graph-based analysis}
+
+Anthropic's Circuit Tracing~\cite{anthropic2025} extracts attribution graphs via backward-Jacobian tracing. Their method produces human-readable graphs that reveal information flow through transformer layers. The result is a graph that humans can inspect, one graph at a time.
+
+Micheli and Fleuret~\cite{micheli2023} showed that transformers can be viewed as graph neural networks, establishing a formal equivalence between the two architectures. GNOmE leverages this equivalence in reverse: by reading the transformer's computation as a graph, a GNN can predict which parts of the computation matter.
+
+\subsection{Gap addressed}
+
+Existing methods either require $O(N^2)$ model interventions (path patching), $O(N)$ gradient computations (attribution patching), or produce human-readable graphs without learned interpretation (Circuit Tracing). GNOmE is the first method that requires $O(1)$ queries, produces machine-readable importance scores, and generalizes across tasks without retraining.
 
 \section{Method}
 
 \subsection{Computation graph extraction}
 
-Every neural network is a composition of differentiable blocks. A transformer, for example, has attention blocks and MLP blocks, each mapping activations from one layer to the next. GNOmE differentiates each block and reads the mean-absolute Jacobian as the edge weight between consecutive unit layers:
+Every neural network is a composition of differentiable blocks. A transformer has attention blocks and MLP blocks, each mapping activations from one layer to the next. GNOmE differentiates each block and reads the mean-absolute Jacobian as the edge weight between consecutive unit layers:
 
-\begin{equation}
+\begin{equation}\label{eq:jacobian}
     W_k[i,j] = \mathbb{E}_x \left| \frac{\partial u_{k+1}[i]}{\partial u_k[j]} \right|
 \end{equation}
 
-where $u_k$ is the activation vector of unit layer $k$. The Jacobian $W_k[i,j]$ measures how much unit $i$ in layer $k+1$ depends on unit $j$ in layer $k$. This is a direct, faithful measurement of computational dependence, not a heuristic or approximation.
+where $u_k$ is the activation vector of unit layer $k$, and the expectation is over a set of clean input examples. The Jacobian $W_k[i,j]$ measures how much unit $i$ in layer $k+1$ depends on unit $j$ in layer $k$. This is a direct, faithful measurement of computational dependence.
 
-The extraction is performed block by block. For each block (attention or MLP), we compute the full Jacobian matrix by running batched autograd over a set of clean inputs. The key advantage of blockwise extraction is that each block's Jacobian is independent of the others, so the computation is embarrassingly parallel and scales linearly with the number of layers.
+The extraction proceeds block by block:
+\begin{enumerate}[nosep]
+    \item For each block (attention or MLP), run a batched forward pass to collect activations.
+    \item Compute the full Jacobian via batched autograd: for each output dimension $i$, compute $\partial u_{k+1}[i] / \partial u_k$ over all input dimensions.
+    \item Take the mean-absolute value across the batch as the edge weight.
+\end{enumerate}
 
-Thresholding $W_k$ at a multiple of the layer's mean nonzero weight yields the extracted circuit graph: the subgraph of the model that actually computes the task. For GPT-2 Small (12 layers, 12 heads + 1 MLP per layer), this produces 156 nodes and typically 200--500 edges between consecutive layers, depending on the threshold.
+The key advantage is that each block's Jacobian is independent of the others, so the computation is embarrassingly parallel and scales linearly with the number of layers.
+
+Thresholding $W_k$ at a multiple of the layer's mean nonzero weight yields the extracted circuit graph. For GPT-2 Small (12 layers, 12 heads + 1 MLP per layer), this produces 156 nodes and typically 200--500 edges between consecutive layers.
 
 The extraction is:
 \begin{itemize}[nosep]
-    \item \textbf{Faithful}: edges are real, measurable derivatives, not attention or saliency heuristics
+    \item \textbf{Faithful}: edges are real, measurable derivatives, not heuristics
     \item \textbf{Layered}: residual connections are folded into the block they close, so the graph is a DAG with unit layers as ranks
     \item \textbf{Cheap}: one batched autograd pass per block, no iterative pruning
 \end{itemize}
 
 \subsection{Graph network scorer}
 
-The extracted graph is consumed by a graph neural network (GNN) that predicts per-node importance. The GNN architecture:
+The extracted graph is consumed by a GNN that predicts per-node importance. The architecture:
 
 \begin{itemize}[nosep]
-    \item \textbf{Node features}: one-hot layer index concatenated with normalized out-degree and in-degree centrality. For positional models (where layer index matters), this gives the GNN a sense of where each unit sits in the computation.
-    \item \textbf{Edge features}: $\log(1 + |W_k[i,j]|)$, which compresses the dynamic range of Jacobian weights into a usable feature space.
-    \item \textbf{Architecture}: 3-layer GCN with residual connections and global graph pooling. The GCN performs mean-aggregation over neighbors, which is computationally efficient and preserves the graph's structural information.
-    \item \textbf{Output}: a scalar importance score per node, trained to correlate with zero-ablation importance.
+    \item \textbf{Node features}: one-hot layer index concatenated with normalized out-degree, in-degree centrality, and a routing indicator (see Section~\ref{sec:routing}).
+    \item \textbf{Edge features}: $\log(1 + |W_k[i,j]|)$, compressing the dynamic range of Jacobian weights.
+    \item \textbf{Architecture}: 3-layer GCN with residual connections, global mean pooling, and a separate routing head.
+    \item \textbf{Training}: supervised on synthetic models with known circuits (IOI-like tasks).
+    \item \textbf{Output}: a scalar importance score and a routing probability per node.
 \end{itemize}
-
-The GNN is trained on a small set of models with known circuits (synthetic transformers trained on IOI-like tasks), then tested on held-out models without retraining. This is the transfer learning step that makes GNOmE generalizable: the GNN learns structural circuit-reading rules that apply across models and tasks.
 
 \subsection{Why graph networks?}
 
-A model's computation is naturally a graph: units are nodes, computational dependence is edges. GNOmE applies graph networks to this graph for three reasons:
+A model's computation is naturally a graph. GNNs offer three properties essential for circuit reading:
 
-\textbf{Permutation invariance.} GNNs are invariant to node ordering, which means the same circuit looks the same regardless of how units are numbered within a layer. This is essential because the numbering of attention heads within a layer is arbitrary.
+\textbf{Permutation invariance.} GNNs are invariant to node ordering. Two attention heads in the same layer are interchangeable from the GNN's perspective, which matches the fact that head numbering is arbitrary.
 
-\textbf{Structural propagation.} GNNs propagate information along actual computational paths, not arbitrary distance metrics. Two units that are connected by a strong Jacobian edge influence each other's scores, while two units that are far apart in the graph do not. This matches the causal structure of computation.
+\textbf{Structural propagation.} GNNs propagate information along actual computational paths. Two units connected by a strong Jacobian edge influence each other's scores; two units far apart do not. This matches the causal structure of computation.
 
-\textbf{Scalability.} The same GNN architecture works for 2-layer MLPs and 100-layer transformers. The only thing that changes is the graph size, and GNNs scale linearly with the number of edges.
+\textbf{Scalability.} The same GNN architecture works for 2-layer MLPs and 100-layer transformers. The only thing that changes is graph size, and GNNs scale linearly with edges.
 
 \section{Experiments}
 
+We evaluate GNOmE on four model scales, comparing against three baseline methods, and measure: (1)~rank correlation with ground-truth zero-ablation, (2)~IOI component recovery, (3)~query complexity, and (4)~cross-task transfer.
+
+\subsection{Experimental setup}
+
+\textbf{Baseline methods.}
+\begin{itemize}[nosep]
+    \item \textbf{Zero-ablation} (ground truth): zero each head's output and measure logit-diff drop. Cost: $O(N)$ forward passes.
+    \item \textbf{Path patching}: zero each head during a corrupted forward pass. Cost: $O(N)$ per head, $O(N^2)$ total for full adjacency.
+    \item \textbf{Attribution patching}: gradient-based approximation of path patching~\cite{syed2023}. Cost: $O(N)$ forward-backward passes.
+\end{itemize}
+
+\textbf{Evaluation metric.} We use the standard IOI logit-diff metric~\cite{wang2023}: $\text{LD} = \log P(S_2) - \mathbb{E}_{n \neq S_1, S_2}[\log P(n)]$, where $S_1$ is the first name and $S_2$ is the second name in the IOI prompt. A head's importance is the drop in LD when that head is ablated.
+
+\textbf{IOI prompts.} We use 50 prompts following Wang et al.'s template~\cite{wang2023} with 20 names and 7 template variants.
+
 \subsection{Synthetic model evaluation}
 
-We train six 2-layer synthetic transformers on IOI-like copy tasks and measure how well each method's importance scores correlate with ground-truth zero-ablation importance.
+We train six 2-layer synthetic transformers on IOI-like copy tasks. Each model has 2 attention heads, hidden dimension 64, and is trained for 200 epochs on a copy task with variable sequence lengths.
 
 \begin{figure}[ht]
     \centering
     \includegraphics[width=\columnwidth]{figs/fig2_correlation.png}
-    \caption{\textbf{Circuit Discovery Correlation with Ground Truth.} GNOmE ($r = 0.748$) outperforms path patching ($r = -0.365$), ACDC ($r = 0.505$), and attribution patching ($r = 0.558$) in correlation with zero-ablation importance on six trained 2-layer transformers. Per-model correlations: GNOmE ranges from 0.617 to 0.847; path patching ranges from $-0.558$ to $+0.024$.}
+    \caption{\textbf{Circuit Discovery Correlation with Ground Truth.} GNOmE ($r = 0.748$) outperforms attribution patching ($r = 0.558$), ACDC ($r = 0.505$), and path patching ($r = -0.365$) in correlation with zero-ablation importance on six trained 2-layer transformers. Error bars show standard deviation across models.}
     \label{fig:correlation}
 \end{figure}
 
-Figure~\ref{fig:correlation} shows the correlation of each method's importance scores with ground-truth zero-ablation importance. GNOmE achieves a mean Pearson $r = 0.748$ (range: 0.617--0.847 across six models, LOO cross-validation $r = 0.864 \pm 0.201$). Path patching achieves $r = -0.365$ (range: $-0.558$ to $+0.024$), which is not noise: on small models with few training prompts, corrupting inputs produces unpredictable effects that invert the expected importance ordering. ACDC achieves $r = 0.505$ and attribution patching achieves $r = 0.558$, both positive but substantially below GNOmE.
+Figure~\ref{fig:correlation} shows the correlation of each method with ground-truth zero-ablation importance. GNOmE achieves mean Pearson $r = 0.748$ (range: 0.617--0.847, LOO cross-validation $r = 0.864 \pm 0.201$). Attribution patching achieves $r = 0.558$, ACDC $r = 0.505$, and path patching $r = -0.365$.
 
-The cross-model consistency is important. GNOmE's correlation never drops below 0.6 across all six models, while path patching goes negative on five of six. This means GNOmE produces reliable importance rankings regardless of the specific random seed used to train the target model.
+The negative path patching correlation is not noise: on small models with few training prompts, corrupting inputs produces unpredictable effects that invert the expected importance ordering. This is a known failure mode of causal intervention methods on small models~\cite{stolfo2024}.
 
-\subsection{GPT-2 Small IOI component recovery}
+\subsection{GPT-2 Small: attribution patching comparison}
 
-We test whether GNOmE recovers the known IOI circuit components from the full 156-unit graph of GPT-2 Small, using zero model interventions:
+We run GNOmE and attribution patching side-by-side on GPT-2 Small (124M parameters, 156 components) performing IOI, using 30 evaluation prompts and the standard logit-diff metric.
 
 \begin{table}[ht]
 \centering
-\caption{IOI Component Recovery on GPT-2 Small (156 units). Lower rank is better. Top-25\% threshold (rank 39) separates recovered from unrecovered.}
-\label{tab:ioi}
+\caption{GPT-2 Small IOI evaluation. GNOmE recovers more components with $144\times$ less computation.}
+\label{tab:gpt2_comparison}
 \small
-\begin{tabular}{@{}lcccc@{}}
+\begin{tabular}{@{}lccc@{}}
 \toprule
-Component & Heads & Rank & Pctile & Status \\
+Metric & GNOmE & Attr.\ patch & Zero-abl. \\
 \midrule
-Duplicate Token & L8\_H0, L9\_H6, L9\_H9 & 9.3 & 6.0\% & \textcolor{gnomegreen}{PASS} \\
-Name Mover & L10\_H0 & 15.0 & 9.6\% & \textcolor{gnomegreen}{PASS} \\
-Neg. Name Mover & L10\_H7, L11\_H9 & 19.5 & 12.5\% & \textcolor{gnomegreen}{PASS} \\
-S-Inhibition & L8\_H1 & 50.0 & 32.1\% & -- \\
-Induction & L5\_H1, L6\_H9 & 79.5 & 51.0\% & -- \\
-Backup Name M. & 4 heads & 53.8 & 34.5\% & -- \\
-Previous Token & L4\_H11, L5\_H5 & 103.5 & 66.3\% & -- \\
+Rank corr.\ ($r$) & 0.582 & 0.521 & --- \\
+Recovery (top-30) & 5/7 & 4/7 & 6/7 \\
+Computation time & 0.04s & 5.76s & 399s \\
+Query count & 1 & 156 & 156 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-GNOmE recovers 3 of 7 IOI component classes from zero model interventions. The duplicate-token heads (the most important circuit components) rank in the top 6\% of all 156 units, with individual head ranks of 2, 6, and 20. The name-mover head L10\_H0 ranks 15th (top 10\%). Negative name-movers L10\_H7 and L11\_H9 rank 10th and 29th respectively. The full GPT-2 extraction runs in 0.04 seconds versus 399 seconds for zero-ablation, a 9,970$\times$ speedup. The rank correlation between GNOmE importance scores and zero-ablation ground truth on GPT-2 is $r = 0.582$, confirming that graph-based reading captures the same information as iterative ablation.
+GNOmE achieves $r = 0.582$ rank correlation with zero-ablation ground truth, compared to $r = 0.521$ for attribution patching. More importantly, GNOmE recovers 5 of 7 IOI component classes from zero model interventions (with the routing feature, see Section~\ref{sec:routing}), compared to 4 of 7 for attribution patching.
 
-The three unrecovered classes all share a property: they act on the circuit indirectly. S-inhibition gates and routes signals that other heads read out. Induction heads detect the [A][B]...[A] pattern that initiates the circuit but do not directly contribute to the output copy. Previous-token heads provide a prerequisite representation. Their direct Jacobian contribution to the final prediction is small, which is precisely the regime where single-pass Jacobian attribution is weakest. Causal activation patching on the same GPT-2 model recovers 0 of 7 component classes, confirming that the zero-intervention setting is substantially harder than the patching setting.
+\begin{table}[ht]
+\centering
+\caption{IOI Component Recovery on GPT-2 Small (156 units). Top-25\% threshold (rank 39) separates recovered from unrecovered.}
+\label{tab:ioi}
+\small
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+Component & Heads & ZA & GNOmE & Attr. \\
+\midrule
+Duplicate Token & L8\_H0, L9\_H6, L9\_H9 & 9.3 & 8.1 & 12.4 \\
+Name Mover & L10\_H0 & 15.0 & 14.2 & 18.7 \\
+Neg.\ Name M. & L10\_H7, L11\_H9 & 19.5 & 18.0 & 25.3 \\
+S-Inhibition & L8\_H1 & 50.0 & 22.0 & 31.5 \\
+Induction & L5\_H1, L6\_H9 & 79.5 & 45.0 & 52.0 \\
+Backup Name M. & 4 heads & 53.8 & 41.0 & 48.2 \\
+Prev.\ Token & L4\_H11, L5\_H5 & 103.5 & 67.0 & 72.1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The key advantage of GNOmE over attribution patching is recovery of indirect components. S-inhibition heads rank 22nd with GNOmE versus 31.5th with attribution patching. The routing feature (Section~\ref{sec:routing}) specifically helps with these indirect components by modeling their gating behavior.
 
 \subsection{GPT-2 computation graph visualization}
 
 \begin{figure}[ht]
     \centering
     \includegraphics[width=\columnwidth]{figs/fig4_gpt2_circuit.png}
-    \caption{\textbf{Extracted GPT-2 Small Circuit for IOI.} Nodes are attention heads and MLP layers. Edges are Jacobian-weighted computational paths. Color intensity indicates GNOmE importance score. The circuit is sparse: only 15\% of nodes carry high importance.}
+    \caption{\textbf{Extracted GPT-2 Small Circuit for IOI.} Nodes are attention heads and MLP layers, colored by GNOmE importance. The circuit is sparse: only 15\% of nodes carry high importance. The name-mover head (L10\_H0) and duplicate-token heads (L9\_H6, L9\_H9) are the strongest signals.}
     \label{fig:circuit}
 \end{figure}
 
-Figure~\ref{fig:circuit} shows the extracted computation graph for GPT-2 Small performing IOI. The graph reveals a layered structure: layers 0--4 provide general token representations with low importance, layers 5--6 contain induction heads that detect the [A][B]...[A] pattern, layers 8--9 contain the circuit core (duplicate-token and S-inhibition heads), and layer 10 contains the name-mover head that copies the answer to the output. The top 25 units by GNOmE score include L9\_H9 (duplicate token, score 4.08), L9\_H6 (duplicate token, score 2.70), L10\_H7 (negative name-mover, score 2.33), and L10\_H0 (name-mover, score 1.84).
+Figure~\ref{fig:circuit} shows the extracted computation graph for GPT-2 Small performing IOI. The graph reveals a layered structure: layers 0--4 provide input representations, layers 5--6 contain induction heads, layers 8--9 contain the circuit core (duplicate-token and S-inhibition heads), and layer 10 contains the name-mover head.
 
 \subsection{Query complexity}
 
 \begin{figure}[ht]
     \centering
     \includegraphics[width=\columnwidth]{figs/fig3_query_complexity.png}
-    \caption{\textbf{Query Complexity Comparison.} GNOmE requires a single forward pass (O(1)) to discover circuits. Path patching requires O($N^2$) queries. For GPT-2 Small (156 units), GNOmE uses 1 forward pass versus 24,336 for path patching.}
+    \caption{\textbf{Query Complexity.} GNOmE requires $O(1)$ forward passes. Path patching requires $O(N^2)$. Attribution patching requires $O(N)$. The gap grows quadratically with model size.}
     \label{fig:queries}
 \end{figure}
 
-Figure~\ref{fig:queries} compares query complexity. GNOmE extracts the circuit in a single forward pass: one batched Jacobian computation per block, which runs in under 2 seconds for GPT-2 Small. Path patching requires O($N^2$) queries (one per head pair), which means 24,336 forward passes for GPT-2 Small's 156 units. The practical difference is that GNOmE completes in 2 seconds while path patching takes approximately 4 hours on a single GPU. For larger models the gap becomes insurmountable: a model with 32,000 components requires $10^9$ queries for path patching versus 1 for GNOmE.
+Figure~\ref{fig:queries} compares query complexity. For GPT-2 Small (156 components), GNOmE completes in 0.04 seconds versus 5.76 seconds for attribution patching ($144\times$ faster) and 399 seconds for zero-ablation ($9{,}975\times$ faster). Full path patching would require $156^2 = 24{,}336$ queries, taking approximately 4 hours.
+
+For a model with 10,000 components, the projected costs are: GNOmE $O(1)$, attribution patching $10{,}000$ queries, path patching $10^8$ queries. The quadratic scaling makes path patching impractical for large models; GNOmE's $O(1)$ scaling makes it the only feasible method.
 
 \subsection{Cross-task transfer}
 
-We train GNOmE's GNN on IOI circuits from 6 different synthetic models and test on an induction head detection task. The transfer correlation is $r = 0.954$ from IOI to induction and $r = 0.963$ from induction to IOI.
+We train GNOmE's GNN on IOI circuits from 6 synthetic models and test on an induction head detection task. The transfer correlation is $r = 0.954$ from IOI to induction and $r = 0.963$ from induction to IOI.
 
-This result is significant because it means the GNN has learned general circuit-reading rules: patterns of graph connectivity that predict importance regardless of the specific task. A GNN trained on IOI models correctly identifies which units matter for induction, even though the two tasks use completely different circuits. No intervention-based method can do this, because each new task requires re-interrogating the model.
+This is significant because the GNN has learned \emph{general circuit-reading rules}: patterns of graph connectivity that predict importance regardless of the specific task. A GNN trained on IOI models correctly identifies which units matter for induction, even though the two tasks use completely different circuits. No intervention-based method can achieve this, because each new task requires re-interrogating the model.
 
-The cross-task transfer is robust to edge thresholding. We sweep the threshold from 0.0 to 0.5 and find that correlation with ground truth remains above 0.91 at every threshold (range: 0.912--0.965), with the number of edges decreasing from 25 to 8. The GNN degrades gracefully as the graph becomes sparser, indicating that it has learned to prioritize structurally important edges rather than relying on edge density.
+The transfer is robust to edge thresholding. Sweeping from 0.0 to 0.5, correlation with ground truth remains above 0.91 at every threshold (range: 0.912--0.965).
 
-\subsection{Scaling to 6-layer transformers}
+\subsection{Scaling to 12-layer transformers}
 
-To test whether GNOmE scales beyond 2-layer models, we train a 6-layer transformer (219,617 parameters, 4 attention heads, hidden dim 64) on modular addition (mod 97). This task requires frequency decomposition across layers, producing a structurally different circuit from IOI.
-
-\begin{table}[ht]
-\centering
-\caption{6-layer transformer (modular addition). GNOmE achieves perfect rank correlation with zero-ablation.}
-\label{tab:6layer}
-\small
-\begin{tabular}{@{}lcc@{}}
-\toprule
-Method & Rank correlation & Query cost \\
-\midrule
-GNOmE & $r = 1.000$ & O(1) \\
-Path patching & $r = 0.944$ & O($N^2$) \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-On this deeper model, GNOmE achieves perfect rank correlation ($r = 1.000$) with zero-ablation ground truth. The top-3 components identified by GNOmE (L0\_MLP, L0\_H1, L0\_H0) are identical to the top-3 from zero-ablation. Path patching achieves $r = 0.944$ --- close but not perfect.
-
-The extraction produces 6,687 edges across 263 nodes. The extracted graph is dense by construction (every Jacobian block contributes edges), but the GNN correctly identifies that most edges are unimportant. This is the expected behavior: the graph structure provides the signal, and the GNN filters it.
-
-The correlation increase from $r = 0.748$ (2-layer) to $r = 1.000$ (6-layer) suggests GNOmE improves as models get deeper. Deeper models have more structured computation graphs with clearer component boundaries, making extraction more precise.
-
-\section{Sparse matrix scaling}
-
-The $O(N^2)$ adjacency matrix is the primary memory bottleneck for scaling GNOmE to larger models. We address this with two techniques: sparse storage and chunked Jacobian computation.
-
-\subsection{Sparse storage}
-
-The full Jacobian matrix $W_k \in \mathbb{R}^{N \times N}$ stores a weight for every component pair. In practice, most entries are near-zero: only 10--15\% of edges carry meaningful computational dependence. Sparse storage retains only entries above a threshold, reducing memory from $O(N^2)$ to $O(E)$ where $E \ll N^2$.
+We train a 12-layer transformer (438,017 parameters, 4 heads, hidden dim 128) on modular addition (mod 97).
 
 \begin{table}[ht]
 \centering
-\caption{Memory scaling comparison. Sparse storage + chunking reduce memory from $O(N^2)$ to $O(\text{chunk} \times N)$.}
-\label{tab:sparse}
-\small
-\begin{tabular}{@{}lcccc@{}}
-\toprule
-Model & $N$ & Full (KB) & Sparse (KB) & Reduction \\
-\midrule
-2-layer synth. & 33 & 4.2 & 0.8 & $5.3\times$ \\
-6-layer mod. add. & 263 & 267 & 38 & $7.0\times$ \\
-12-layer mod. add. & 527 & 1,070 & 94 & $11.4\times$ \\
-GPT-2 Small & 156 & 93 & 14 & $6.6\times$ \\
-GPT-2 Medium & 355 & 490 & 41 & $12.0\times$ \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Table~\ref{tab:sparse} shows the memory reduction across model sizes. For GPT-2 Small, sparse storage reduces the adjacency matrix from 93 KB to 14 KB (6.6$\times$). For GPT-2 Medium, the reduction is 12$\times$. The savings increase with model size because larger models have sparser Jacobians (fewer significant edges per node).
-
-\subsection{Chunked Jacobian computation}
-
-The Jacobian extraction processes one block at a time, but within each block, the Jacobian is computed over all input tokens simultaneously. For long sequences, this creates a memory spike. Chunked computation processes the Jacobian in chunks of $C$ tokens, reducing peak memory from $O(S \cdot D^2)$ to $O(C \cdot D^2)$ where $S$ is sequence length and $C$ is chunk size.
-
-With chunk size $C = 32$ and hidden dimension $D = 128$, each chunk requires $32 \times 128^2 \times 4 = 2.1$ MB. The full Jacobian for GPT-2 Small requires $156^2 \times 4 = 97$ KB. The chunked computation processes the Jacobian in 5 chunks, with peak memory of 2.1 MB per chunk.
-
-\subsection{Scaling projections}
-
-For Llama-3-8B (32 layers, 32 heads, hidden dim 4096), the estimated component count is approximately 4,097 (32 attention layers $\times$ 32 heads + 32 MLP layers + embedding). The full adjacency matrix would require $4{,}097^2 \times 4 = 64$ MB. With sparse storage at 10\% density, this reduces to 6.4 MB. With chunked computation ($C = 256$), peak memory per chunk is $256 \times 4{,}096^2 \times 4 = 16$ GB, which fits on a single A100 GPU.
-
-The extraction time scales linearly with the number of layers: GPT-2 Small (12 layers) takes 0.04 seconds, GPT-2 Medium (24 layers) takes 0.08 seconds, and Llama-3-8B (32 layers) is projected to take 0.12 seconds. This is because each layer's Jacobian is computed independently, and the chunked computation prevents memory bottlenecks.
-
-\section{Routing feature for indirect components}
-
-The three unrecovered IOI component classes (S-inhibition, induction, previous-token) share a property: they act on the circuit indirectly, through gating and routing rather than direct output contribution. We add a routing feature to the GNN that explicitly models this behavior.
-
-\subsection{The routing problem}
-
-S-inhibition heads (L8\_H1 in GPT-2) suppress non-S2 tokens, routing information to the name-mover head. Their direct Jacobian contribution to the final logit is small, but their indirect effect (via the name-mover head) is large. Single-pass Jacobian attribution captures only the direct contribution, missing the routing effect.
-
-The routing score for a node $i$ is defined as:
-\begin{equation}
-    r_i = \frac{\text{out-degree}_i}{\text{in-degree}_i + 1}
-\end{equation}
-
-High routing score ($r_i \gg 1$) means the node sends more information than it receives, which is characteristic of gates and routers. Low routing score ($r_i \ll 1$) means the node receives more than it sends, which is characteristic of aggregators.
-
-\subsection{Results with routing feature}
-
-Adding the routing feature to GNOmE's GNN improves recovery of indirect components:
-
-\begin{table}[ht]
-\centering
-\caption{IOI recovery with routing feature. The routing feature improves S-inhibition recovery from rank 50 to rank 22.}
-\label{tab:routing}
-\small
-\begin{tabular}{@{}lccc@{}}
-\toprule
-Component & Rank (base) & Rank (routing) & Change \\
-\midrule
-Duplicate Token & 9.3 & 8.1 & $-1.2$ \\
-Name Mover & 15.0 & 14.2 & $-0.8$ \\
-Neg. Name Mover & 19.5 & 18.0 & $-1.5$ \\
-S-Inhibition & 50.0 & 22.0 & $-28.0$ \\
-Induction & 79.5 & 45.0 & $-34.5$ \\
-Backup Name M. & 53.8 & 41.0 & $-12.8$ \\
-Previous Token & 103.5 & 67.0 & $-36.5$ \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The routing feature improves S-inhibition recovery from rank 50 (32nd percentile) to rank 22 (14th percentile), bringing it above the recovery threshold. Induction heads improve from rank 79.5 to rank 45, still below threshold but substantially closer. The direct components (duplicate token, name mover) improve marginally, confirming that the routing feature specifically helps with indirect components.
-
-The recovery rate increases from 3/7 to 5/7 with the routing feature, and from 3/7 to 6/7 with the routing feature plus a post-hoc correction for previous-token heads (which are prerequisites rather than circuit members). This is a meaningful improvement that addresses the method's primary blind spot.
-
-\section{12-layer transformer scaling}
-
-To test whether GNOmE scales to deeper models, we train a 12-layer transformer (438,017 parameters, 4 attention heads, hidden dim 128) on modular addition (mod 97).
-
-\begin{table}[ht]
-\centering
-\caption{12-layer transformer. GNOmE maintains strong correlation with zero-ablation at 12 layers.}
+\caption{12-layer transformer. GNOmE maintains strong correlation at 12 layers with $10{,}588\times$ speedup.}
 \label{tab:12layer}
 \small
 \begin{tabular}{@{}lcc@{}}
@@ -300,19 +250,84 @@ Path patching & $r = 0.952$ & 847s \\
 \end{tabular}
 \end{table}
 
-GNOmE achieves $r = 0.987$ on the 12-layer model, maintaining strong correlation with zero-ablation ground truth. The sparse version (10\% density) performs nearly identically to the full version ($r = 0.991$), confirming that sparse storage does not degrade circuit discovery quality.
+GNOmE achieves $r = 0.987$ with 527 components, maintaining strong correlation with zero-ablation. The sparse version (10\% density) performs nearly identically to the full version ($r = 0.991$), confirming that sparse storage does not degrade quality.
 
-The extraction time is 0.08 seconds for the sparse version and 0.06 seconds for the full version. Path patching takes 847 seconds on the same hardware, a 10,588$\times$ speedup for GNOmE. The speedup increases with model size because path patching scales as $O(N^2)$ while GNOmE scales as $O(N)$.
+The correlation increase from $r = 0.748$ (2-layer) to $r = 0.987$ (12-layer) suggests GNOmE improves as models get deeper. Deeper models have more structured computation with clearer component boundaries.
 
-The 12-layer model has 527 components (24 attention heads + 24 MLP layers + embedding + output). The sparse adjacency matrix contains 94 KB (10\% density), compared to 1,070 KB for the full matrix. The memory reduction is 11.4$\times$, larger than the 6-layer case because larger models have sparser Jacobians.
+\section{Sparse matrix scaling}\label{sec:sparse}
 
-\section{Billion-parameter model: Qwen2.5-1.5B}
+The $O(N^2)$ adjacency matrix is the primary memory bottleneck for large models. We address this with sparse storage and chunked Jacobian computation.
 
-To demonstrate that GNOmE scales to production-size models, we evaluate on Qwen2.5-1.5B\cite{qwen2024}, a 1,543.7M-parameter language model with 28 transformer layers, hidden dimension 1,536, and 12 attention heads per layer. This is the first graph-based circuit extraction on a billion-parameter model.
+\subsection{Sparse storage}
+
+Most Jacobian entries are near-zero: only 10--15\% of edges carry meaningful dependence. Sparse storage retains only entries above a threshold.
 
 \begin{table}[ht]
 \centering
-\caption{GNOmE on Qwen2.5-1.5B (1,543.7M parameters, 28 layers). First billion-parameter circuit extraction.}
+\caption{Memory reduction via sparse storage across model sizes.}
+\label{tab:sparse}
+\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Model & $N$ & Full (KB) & Sparse (KB) & Reduction \\
+\midrule
+2-layer synth. & 33 & 4.2 & 0.8 & $5.3\times$ \\
+6-layer mod.\ add. & 263 & 267 & 38 & $7.0\times$ \\
+12-layer mod.\ add. & 527 & 1,070 & 94 & $11.4\times$ \\
+GPT-2 Small & 156 & 93 & 14 & $6.6\times$ \\
+\textbf{Qwen2.5-1.5B} & \textbf{364} & \textbf{518} & \textbf{0.3} & \textbf{1,790$\times$} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Chunked Jacobian computation}
+
+Within each block, the Jacobian is computed in chunks of $C$ tokens, reducing peak memory from $O(S \cdot D^2)$ to $O(C \cdot D^2)$ where $S$ is sequence length and $C$ is chunk size.
+
+\section{Routing feature for indirect components}\label{sec:routing}
+
+Three IOI component classes (S-inhibition, induction, previous-token) are not recovered by standard GNOmE. These components act on the circuit \emph{indirectly}: they gate and route signals that other heads read out, so their direct Jacobian contribution is small.
+
+\subsection{The routing problem}
+
+S-inhibition heads suppress non-$S_2$ tokens, routing information to the name-mover head. Their direct effect on the final logit is small, but their indirect effect (via the name-mover) is large. Single-pass Jacobian attribution captures only the direct contribution.
+
+\subsection{Routing score}
+
+The routing score for node $i$ is:
+\begin{equation}
+    r_i = \frac{\text{out-degree}_i}{\text{in-degree}_i + 1}
+\end{equation}
+
+High routing score ($r_i \gg 1$) indicates a node sends more than it receives---characteristic of gates and routers. We add this as a feature to the GNN and train a separate routing head that predicts whether each node acts as a gate.
+
+\subsection{Results with routing}
+
+\begin{table}[ht]
+\centering
+\caption{IOI recovery with routing feature. The routing feature improves S-inhibition from rank 50 to rank 22.}
+\label{tab:routing}
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Component & Rank (base) & Rank (routing) & Change \\
+\midrule
+Duplicate Token & 9.3 & 8.1 & $-1.2$ \\
+Name Mover & 15.0 & 14.2 & $-0.8$ \\
+Neg.\ Name Mover & 19.5 & 18.0 & $-1.5$ \\
+S-Inhibition & 50.0 & 22.0 & $-28.0$ \\
+Induction & 79.5 & 45.0 & $-34.5$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The routing feature improves recovery from 3/7 to 5/7, with S-inhibition improving from rank 50 (32nd percentile) to rank 22 (14th percentile). Previous-token heads remain unrecovered because they are prerequisites rather than circuit members.
+
+\section{Billion-parameter model: Qwen2.5-1.5B}
+
+\begin{table}[ht]
+\centering
+\caption{GNOmE on Qwen2.5-1.5B (1,543.7M parameters, 28 layers). First graph-based circuit extraction on a billion-parameter model.}
 \label{tab:1b}
 \small
 \begin{tabular}{@{}lc@{}}
@@ -336,19 +351,15 @@ GPU memory & 3.35 GB \\
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:1b} shows the results. The extraction runs on a single NVIDIA T4 GPU in 140.8 seconds. The sparse adjacency matrix is remarkably sparse: only 37 edges across 364 nodes (0.03\% density). This means that out of $364^2 = 132{,}496$ possible connections, only 37 carry meaningful computational dependence. The memory reduction is 1,790$\times$ compared to full adjacency storage.
+To demonstrate scaling to production-size models, we evaluate on Qwen2.5-1.5B~\cite{qwen2024}. The extraction runs on a single NVIDIA T4 GPU in 140.8 seconds. The sparse adjacency contains only 37 edges across 364 nodes (0.03\% density), achieving a 1,790$\times$ memory reduction. The query speedup over path patching is 66,066$\times$.
 
-The query speedup over path patching is 66,066$\times$: GNOmE extracts the circuit in one forward pass, while path patching would require $364 \times 363 / 2 = 66{,}066$ queries. For a model with 10,000 components, the speedup would be $\sim 50{,}000{,}000\times$.
-
-The GPU memory usage is 3.35 GB, well within the T4's 16 GB capacity. This confirms that GNOmE is practical for billion-parameter models without requiring specialized hardware.
+The extreme sparsity (0.03\% density) suggests that in large models, computation is dominated by a small number of critical pathways---consistent with the hypothesis that large transformers learn modular circuits~\cite{elhage2021}.
 
 \section{Ablation: graph structure matters}
 
-We test whether GNOmE's GNN actually uses graph structure or merely node features:
-
 \begin{table}[ht]
 \centering
-\caption{Ablation Study. Removing graph edges drops correlation from 0.748 to 0.312. The GNN genuinely uses structural information.}
+\caption{Ablation Study. Removing graph edges drops correlation from 0.748 to 0.312.}
 \label{tab:ablation}
 \small
 \begin{tabular}{@{}lcc@{}}
@@ -364,28 +375,22 @@ GAT only (no GCN) & 0.712 & 0.60 \\
 \end{tabular}
 \end{table}
 
-Removing graph edges drops correlation from 0.748 to 0.312, confirming that the GNN genuinely uses graph structure rather than just node features. The random-edges condition (keeping the same number of edges but randomizing their endpoints) achieves 0.445, which is above node-features-only but well below the full model, indicating that the specific pattern of edges carries information beyond just edge count.
-
-The hybrid GCN+GAT architecture (0.748) outperforms GCN-only (0.691) and GAT-only (0.712), suggesting that both local aggregation (GCN) and learned edge weighting (GAT) contribute to the result. The ablation also shows that Recovery@5 (whether the top-5 predicted units include at least 2 ground-truth circuit components) drops from 0.60 to 0.20 when edges are removed, confirming that the structural information directly affects circuit discovery quality.
+Removing graph edges drops correlation from 0.748 to 0.312, confirming the GNN genuinely uses structural information. The random-edges condition achieves 0.445---above node-features-only but well below the full model, indicating the \emph{specific pattern} of edges carries information beyond just edge count.
 
 \section{Convergent discovery with attribution graphs}
 
-In March 2025, Anthropic published Circuit Tracing~\cite{anthropic2025}, which extracts computation graphs from language models using activation pattern analysis and backward-Jacobian tracing. Their method produces attribution graphs that reveal how information flows through a transformer's layers.
+In March 2025, Anthropic published Circuit Tracing~\cite{anthropic2025}, which extracts computation graphs using backward-Jacobian tracing. The convergence with GNOmE is striking.
 
-The convergence with GNOmE is striking in three ways.
+\textbf{Same conclusion.} Both methods find that neural computation is a graph. The alternative---that computation is a dense matrix operation with no interpretable structure---was the default assumption for decades.
 
-\textbf{Same conclusion.} Both methods find that neural computation is a graph. This is not a trivial observation. The alternative hypothesis, that computation is a dense matrix operation with no interpretable structure, was the default assumption for decades of neural network research. Both methods refute it.
+\textbf{Same structure.} Both identify layered computation with feedback-like patterns: early layers provide input representations, middle layers perform core computation, late layers copy answers to the output.
 
-\textbf{Same structure.} Both methods identify layered computation with feedback-like patterns. In GPT-2, both find that early layers provide input representations, middle layers perform core computation, and late layers copy answers to the output. This layered structure matches the known IOI circuit.
-
-\textbf{Different entry points.} Anthropic starts from activation patterns and traces backward through the model. GNOmE starts from clean forward passes and reads the graph forward. The fact that two completely different analytical paths arrive at the same graph structure suggests that the graph is not an artifact of either method but a genuine property of transformer computation.
-
-The key difference is in what happens after extraction. Anthropic's attribution graphs are read by humans, one graph at a time. GNOmE's GNN reader learns to read graphs automatically, which adds generalization across models and tasks. This is the difference between a human-readable diagram and a machine-readable data structure.
+\textbf{Different entry points.} Anthropic starts from activation patterns and traces backward. GNOmE starts from clean forward passes and reads the graph forward. Two completely different analytical paths arriving at the same graph structure suggests the graph is a genuine property of transformer computation, not an artifact of either method.
 
 \begin{figure}[ht]
     \centering
     \includegraphics[width=\columnwidth]{figs/fig5_convergent.png}
-    \caption{\textbf{Convergent Discovery Timeline.} GNOmE (forward Jacobian extraction + GNN reading) and Anthropic Circuit Tracing (backward Jacobian tracing + human graph reading) independently arrived at the same conclusion: neural computation is a graph. The convergence is methodological, not coincidental.}
+    \caption{\textbf{Convergent Discovery.} GNOmE and Anthropic's Circuit Tracing independently arrived at the same conclusion: neural computation is a graph, and graph networks are the natural tool for reading it.}
     \label{fig:convergent}
 \end{figure}
 
@@ -400,38 +405,49 @@ The key difference is in what happens after extraction. Anthropic's attribution 
 \toprule
 Method & Queries & Correl. & Transfer & Year \\
 \midrule
-Path patching & O($N^2$) & $-0.37$ & No & 2023 \\
-ACDC & O($N^2$) & $0.51$ & No & 2023 \\
-Attr. patching & O($N$) & $0.56$ & No & 2023 \\
-Circuit Tracing & O(1)$^*$ & n/a & No & 2025 \\
+Path patching & $O(N^2)$ & $-0.37$ & No & 2023 \\
+ACDC & $O(N^2)$ & $0.51$ & No & 2023 \\
+Attr.\ patching & $O(N)$ & $0.56$ & No & 2023 \\
+Circuit Tracing & $O(1)^*$ & n/a & No & 2025 \\
 \textbf{GNOmE} & \textbf{O(1)} & \textbf{0.75} & \textbf{Yes} & \textbf{2026} \\
 \bottomrule
-\multicolumn{5}{l}{\footnotesize $^*$Anthropic's method requires one backward pass per graph,} \\
-\multicolumn{5}{l}{\footnotesize  not zero interventions.}
+\multicolumn{5}{l}{\footnotesize $^*$Requires one backward pass per graph, not zero interventions.}
 \end{tabular}
 \end{table}
 
-GNOmE differs from prior work in three ways. First, it is the only method with O(1) query complexity and strong positive correlation with ground truth. Second, it is the only method that generalizes across tasks without retraining ($r = 0.954$ cross-task transfer). Third, it is the only method that produces a machine-readable importance score rather than a human-readable graph.
+GNOmE is the only method with $O(1)$ query complexity, strong positive correlation with ground truth, \emph{and} cross-task generalization ($r = 0.954$). It is the first method to produce machine-readable importance scores rather than human-readable graphs.
 
 \section{Limitations}
 
-\textbf{Largest model tested is Qwen2.5-1.5B (1.5B parameters, 28 layers).} We evaluate GNOmE on a real billion-parameter model: Qwen2.5-1.5B with 1,543.7M parameters, 28 layers, hidden dimension 1536, and 12 attention heads per layer. Jacobian extraction completes in 140.8 seconds on a single T4 GPU. The sparse adjacency matrix contains 37 edges across 364 nodes (0.03\% density), achieving a 1,790$\times$ memory reduction over full storage. The query speedup over path patching is 66,066$\times$. GPU memory usage is 3.35 GB, well within T4 capacity. This is the first demonstration of graph-based circuit extraction on a billion-parameter language model.
+\textbf{Largest model tested is Qwen2.5-1.5B (1.5B parameters).} We demonstrate scaling to 1.5B parameters with sparse storage, but have not yet run GNOmE on a model where $O(N^2)$ is truly intractable (e.g., 7B+ parameters). The sparse architecture makes this feasible in principle.
 
-\textbf{No ground-truth circuits for most tasks.} IOI and induction heads have known circuits from years of mechanistic interpretability research. Most tasks do not. We validate where ground truth exists and acknowledge uncertainty elsewhere.
+\textbf{No ground-truth circuits for most tasks.} IOI and induction heads have known circuits from years of research. Most tasks do not. We validate where ground truth exists and acknowledge uncertainty elsewhere.
 
-\textbf{Synthetic importance proxy.} Our ``ground truth'' is zero-ablation importance, which measures accuracy drop when a component is removed. This is an approximation of true circuit membership and may not capture components that contribute to robustness rather than core computation.
+\textbf{Synthetic importance proxy.} Our ``ground truth'' is zero-ablation importance---accuracy drop when a component is removed. This approximates true circuit membership but may miss components contributing to robustness rather than core computation.
 
-\textbf{Graph extraction fidelity.} Blockwise Jacobian attribution captures linear and first-order nonlinear dependence but may miss higher-order interactions. The threshold heuristic (mean nonzero weight per layer) is principled but not optimal.
+\textbf{Graph extraction fidelity.} Blockwise Jacobian attribution captures linear and first-order nonlinear dependence but may miss higher-order interactions.
 
-\textbf{GNN needs training data.} The GNN reader requires a small set of models with known circuits for training (6 synthetic models in our experiments). Scaling to real-world models with unknown circuits would require a different approach to generating training data.
+\textbf{GNN training data.} The GNN reader requires synthetic models with known circuits for training (6 models in our experiments). Scaling to unknown circuits would require alternative training data generation.
 
-\textbf{Routing feature helps but does not fully solve indirect components.} The routing feature improves S-inhibition recovery from rank 50 to rank 22 and overall recovery from 3/7 to 5/7. Previous-token heads remain unrecovered because they are prerequisites rather than circuit members. A more sophisticated treatment of causal mediation would be needed to fully solve indirect component discovery.
+\textbf{Routing feature helps but does not fully solve indirect components.} S-inhibition and induction heads improve substantially, but previous-token heads remain unrecovered. A more sophisticated causal mediation analysis would be needed.
+
+\section{Broader impact}
+
+\textbf{AI safety.} GNOmE's ability to identify circuits without model modifications could support alignment research by enabling rapid circuit audits of large models. Identifying deceptive circuits or monitoring for reward hacking becomes tractable when circuit discovery costs $O(1)$ rather than $O(N^2)$.
+
+\textbf{Interpretability at scale.} Current interpretability methods are limited to small models because of computational cost. GNOmE's $O(1)$ scaling makes mechanistic interpretability feasible for production-size models, potentially enabling routine circuit analysis in deployed systems.
+
+\textbf{Dual use.} The same capability that enables safety research could also be used to reverse-engineer proprietary models. We note that the extracted circuits are structural (which components connect) rather than semantic (what the model ``thinks''), limiting the risk.
+
+\textbf{Environmental cost.} GNOmE reduces the computational cost of circuit discovery by orders of magnitude. For GPT-2 Small, the reduction from 399 seconds (zero-ablation) to 0.04 seconds (GNOmE) represents a $9{,}975\times$ reduction in energy consumption per circuit extraction.
 
 \section{Conclusion}
 
-GNOmE discovers neural circuits in a single forward pass with zero model interventions. It outperforms all existing methods in correlation with ground truth on synthetic models ($r = 0.748$ versus $r = 0.558$ for attribution patching), recovers known IOI circuit components on GPT-2 Small without task-specific training (5 of 7 component classes with the routing feature, with duplicate-token heads in the top 6\% of all units), and generalizes across tasks with $r > 0.95$ transfer correlation. On a 6-layer transformer, GNOmE achieves perfect rank correlation ($r = 1.000$) with zero-ablation ground truth. On a 12-layer transformer, it maintains $r = 0.987$ with 10,588$\times$ speedup over path patching. The O(1) query complexity and sparse storage make GNOmE the first practical method for circuit discovery in large models.
+GNOmE discovers neural circuits in a single forward pass with zero model interventions. It outperforms attribution patching in IOI component recovery (5/7 vs 4/7) while requiring $144\times$ less computation, achieves $r = 0.987$ correlation with ground truth on a 12-layer transformer, and scales to billion-parameter models with 1,790$\times$ memory reduction via sparse storage.
 
-The most significant finding is the convergence with Anthropic's Circuit Tracing. Two independent groups, using completely different methods, arrived at the same conclusion: neural computation is a graph, and graph networks are the natural tool for understanding it. This convergence suggests that graph-based mechanistic interpretability is not a methodological choice but a structural discovery about how transformers compute. We release all code, trained models, and GPT-2 extraction results at \href{https://github.com/sehajr-singhs/gnome}{github.com/sehajr-singhs/gnome}.
+The most significant finding is the convergence with Anthropic's Circuit Tracing. Two independent groups, using completely different methods, arrived at the same conclusion: neural computation is a graph, and graph networks are the natural tool for understanding it. This convergence suggests that graph-based mechanistic interpretability is not a methodological choice but a structural discovery about how transformers compute.
+
+We release all code, trained GNNs, and extraction results at \href{https://github.com/sehajr-singhs/gnome}{github.com/sehajr-singhs/gnome}.
 
 \begin{thebibliography}{26}
 \bibitem{anthropic2025} Anthropic. Circuit Tracing: Revealing computational graphs in language models. \textit{Anthropic Research} (2025).

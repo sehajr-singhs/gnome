@@ -10,66 +10,78 @@
 \citation{cammarata2020}
 \citation{elhage2021}
 \citation{wang2023}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
 \citation{vig2020}
 \citation{geiger2021}
-\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2}Related work}{1}{section.2}\protected@file@percent }
 \citation{conmy2023}
 \citation{syed2023}
 \citation{marks2024}
 \citation{templeton2024}
 \citation{anthropic2025}
+\citation{micheli2023}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Background and related work}{2}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Circuit discovery methods}{2}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Graph-based analysis}{2}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Gap addressed}{2}{subsection.2.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {3}Method}{2}{section.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Computation graph extraction}{2}{subsection.3.1}\protected@file@percent }
+\newlabel{eq:jacobian}{{1}{2}{Computation graph extraction}{equation.1}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Graph network scorer}{2}{subsection.3.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Why graph networks?}{2}{subsection.3.3}\protected@file@percent }
+\citation{syed2023}
+\citation{wang2023}
+\citation{wang2023}
+\citation{stolfo2024}
 \@writefile{toc}{\contentsline {section}{\numberline {4}Experiments}{3}{section.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Synthetic model evaluation}{3}{subsection.4.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces \textbf  {Circuit Discovery Correlation with Ground Truth.} GNOmE ($r = 0.748$) outperforms path patching ($r = -0.365$), ACDC ($r = 0.505$), and attribution patching ($r = 0.558$) in correlation with zero-ablation importance on six trained 2-layer transformers. Per-model correlations: GNOmE ranges from 0.617 to 0.847; path patching ranges from $-0.558$ to $+0.024$.}}{3}{figure.caption.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Experimental setup}{3}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Synthetic model evaluation}{3}{subsection.4.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces \textbf  {Circuit Discovery Correlation with Ground Truth.} GNOmE ($r = 0.748$) outperforms attribution patching ($r = 0.558$), ACDC ($r = 0.505$), and path patching ($r = -0.365$) in correlation with zero-ablation importance on six trained 2-layer transformers. Error bars show standard deviation across models.}}{3}{figure.caption.2}\protected@file@percent }
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{fig:correlation}{{1}{3}{\textbf {Circuit Discovery Correlation with Ground Truth.} GNOmE ($r = 0.748$) outperforms path patching ($r = -0.365$), ACDC ($r = 0.505$), and attribution patching ($r = 0.558$) in correlation with zero-ablation importance on six trained 2-layer transformers. Per-model correlations: GNOmE ranges from 0.617 to 0.847; path patching ranges from $-0.558$ to $+0.024$}{figure.caption.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}GPT-2 Small IOI component recovery}{3}{subsection.4.2}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces IOI Component Recovery on GPT-2 Small (156 units). Lower rank is better. Top-25\% threshold (rank 39) separates recovered from unrecovered.}}{3}{table.caption.3}\protected@file@percent }
-\newlabel{tab:ioi}{{1}{3}{IOI Component Recovery on GPT-2 Small (156 units). Lower rank is better. Top-25\% threshold (rank 39) separates recovered from unrecovered}{table.caption.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}GPT-2 computation graph visualization}{3}{subsection.4.3}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces \textbf  {Extracted GPT-2 Small Circuit for IOI.} Nodes are attention heads and MLP layers. Edges are Jacobian-weighted computational paths. Color intensity indicates GNOmE importance score. The circuit is sparse: only 15\% of nodes carry high importance.}}{4}{figure.caption.4}\protected@file@percent }
-\newlabel{fig:circuit}{{2}{4}{\textbf {Extracted GPT-2 Small Circuit for IOI.} Nodes are attention heads and MLP layers. Edges are Jacobian-weighted computational paths. Color intensity indicates GNOmE importance score. The circuit is sparse: only 15\% of nodes carry high importance}{figure.caption.4}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces \textbf  {Query Complexity Comparison.} GNOmE requires a single forward pass (O(1)) to discover circuits. Path patching requires O($N^2$) queries. For GPT-2 Small (156 units), GNOmE uses 1 forward pass versus 24,336 for path patching.}}{4}{figure.caption.5}\protected@file@percent }
-\newlabel{fig:queries}{{3}{4}{\textbf {Query Complexity Comparison.} GNOmE requires a single forward pass (O(1)) to discover circuits. Path patching requires O($N^2$) queries. For GPT-2 Small (156 units), GNOmE uses 1 forward pass versus 24,336 for path patching}{figure.caption.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Query complexity}{4}{subsection.4.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Cross-task transfer}{4}{subsection.4.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.6}Scaling to 6-layer transformers}{4}{subsection.4.6}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces 6-layer transformer (modular addition). GNOmE achieves perfect rank correlation with zero-ablation.}}{4}{table.caption.6}\protected@file@percent }
-\newlabel{tab:6layer}{{2}{4}{6-layer transformer (modular addition). GNOmE achieves perfect rank correlation with zero-ablation}{table.caption.6}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Sparse matrix scaling}{5}{section.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Sparse storage}{5}{subsection.5.1}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Memory scaling comparison. Sparse storage + chunking reduce memory from $O(N^2)$ to $O(\text  {chunk} \times N)$.}}{5}{table.caption.7}\protected@file@percent }
-\newlabel{tab:sparse}{{3}{5}{Memory scaling comparison. Sparse storage + chunking reduce memory from $O(N^2)$ to $O(\text {chunk} \times N)$}{table.caption.7}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Chunked Jacobian computation}{5}{subsection.5.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Scaling projections}{5}{subsection.5.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {6}Routing feature for indirect components}{5}{section.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}The routing problem}{5}{subsection.6.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Results with routing feature}{5}{subsection.6.2}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces IOI recovery with routing feature. The routing feature improves S-inhibition recovery from rank 50 to rank 22.}}{5}{table.caption.8}\protected@file@percent }
-\newlabel{tab:routing}{{4}{5}{IOI recovery with routing feature. The routing feature improves S-inhibition recovery from rank 50 to rank 22}{table.caption.8}{}}
+\newlabel{fig:correlation}{{1}{3}{\textbf {Circuit Discovery Correlation with Ground Truth.} GNOmE ($r = 0.748$) outperforms attribution patching ($r = 0.558$), ACDC ($r = 0.505$), and path patching ($r = -0.365$) in correlation with zero-ablation importance on six trained 2-layer transformers. Error bars show standard deviation across models}{figure.caption.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}GPT-2 Small: attribution patching comparison}{3}{subsection.4.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces GPT-2 Small IOI evaluation. GNOmE recovers more components with $144\times $ less computation.}}{3}{table.caption.3}\protected@file@percent }
+\newlabel{tab:gpt2_comparison}{{1}{3}{GPT-2 Small IOI evaluation. GNOmE recovers more components with $144\times $ less computation}{table.caption.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}GPT-2 computation graph visualization}{3}{subsection.4.4}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces IOI Component Recovery on GPT-2 Small (156 units). Top-25\% threshold (rank 39) separates recovered from unrecovered.}}{4}{table.caption.4}\protected@file@percent }
+\newlabel{tab:ioi}{{2}{4}{IOI Component Recovery on GPT-2 Small (156 units). Top-25\% threshold (rank 39) separates recovered from unrecovered}{table.caption.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces \textbf  {Extracted GPT-2 Small Circuit for IOI.} Nodes are attention heads and MLP layers, colored by GNOmE importance. The circuit is sparse: only 15\% of nodes carry high importance. The name-mover head (L10\_H0) and duplicate-token heads (L9\_H6, L9\_H9) are the strongest signals.}}{4}{figure.caption.5}\protected@file@percent }
+\newlabel{fig:circuit}{{2}{4}{\textbf {Extracted GPT-2 Small Circuit for IOI.} Nodes are attention heads and MLP layers, colored by GNOmE importance. The circuit is sparse: only 15\% of nodes carry high importance. The name-mover head (L10\_H0) and duplicate-token heads (L9\_H6, L9\_H9) are the strongest signals}{figure.caption.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Query complexity}{4}{subsection.4.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces \textbf  {Query Complexity.} GNOmE requires $O(1)$ forward passes. Path patching requires $O(N^2)$. Attribution patching requires $O(N)$. The gap grows quadratically with model size.}}{4}{figure.caption.6}\protected@file@percent }
+\newlabel{fig:queries}{{3}{4}{\textbf {Query Complexity.} GNOmE requires $O(1)$ forward passes. Path patching requires $O(N^2)$. Attribution patching requires $O(N)$. The gap grows quadratically with model size}{figure.caption.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6}Cross-task transfer}{4}{subsection.4.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.7}Scaling to 12-layer transformers}{4}{subsection.4.7}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces 12-layer transformer. GNOmE maintains strong correlation at 12 layers with $10{,}588\times $ speedup.}}{4}{table.caption.7}\protected@file@percent }
+\newlabel{tab:12layer}{{3}{4}{12-layer transformer. GNOmE maintains strong correlation at 12 layers with $10{,}588\times $ speedup}{table.caption.7}{}}
 \citation{qwen2024}
-\@writefile{toc}{\contentsline {section}{\numberline {7}12-layer transformer scaling}{6}{section.7}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces 12-layer transformer. GNOmE maintains strong correlation with zero-ablation at 12 layers.}}{6}{table.caption.9}\protected@file@percent }
-\newlabel{tab:12layer}{{5}{6}{12-layer transformer. GNOmE maintains strong correlation with zero-ablation at 12 layers}{table.caption.9}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {8}Billion-parameter model: Qwen2.5-1.5B}{6}{section.8}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces GNOmE on Qwen2.5-1.5B (1,543.7M parameters, 28 layers). First billion-parameter circuit extraction.}}{6}{table.caption.10}\protected@file@percent }
-\newlabel{tab:1b}{{6}{6}{GNOmE on Qwen2.5-1.5B (1,543.7M parameters, 28 layers). First billion-parameter circuit extraction}{table.caption.10}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {9}Ablation: graph structure matters}{6}{section.9}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Ablation Study. Removing graph edges drops correlation from 0.748 to 0.312. The GNN genuinely uses structural information.}}{6}{table.caption.11}\protected@file@percent }
-\newlabel{tab:ablation}{{7}{6}{Ablation Study. Removing graph edges drops correlation from 0.748 to 0.312. The GNN genuinely uses structural information}{table.caption.11}{}}
+\citation{elhage2021}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Sparse matrix scaling}{5}{section.5}\protected@file@percent }
+\newlabel{sec:sparse}{{5}{5}{Sparse matrix scaling}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Sparse storage}{5}{subsection.5.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Memory reduction via sparse storage across model sizes.}}{5}{table.caption.8}\protected@file@percent }
+\newlabel{tab:sparse}{{4}{5}{Memory reduction via sparse storage across model sizes}{table.caption.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Chunked Jacobian computation}{5}{subsection.5.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}Routing feature for indirect components}{5}{section.6}\protected@file@percent }
+\newlabel{sec:routing}{{6}{5}{Routing feature for indirect components}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}The routing problem}{5}{subsection.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Routing score}{5}{subsection.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Results with routing}{5}{subsection.6.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces IOI recovery with routing feature. The routing feature improves S-inhibition from rank 50 to rank 22.}}{5}{table.caption.9}\protected@file@percent }
+\newlabel{tab:routing}{{5}{5}{IOI recovery with routing feature. The routing feature improves S-inhibition from rank 50 to rank 22}{table.caption.9}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Billion-parameter model: Qwen2.5-1.5B}{5}{section.7}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces GNOmE on Qwen2.5-1.5B (1,543.7M parameters, 28 layers). First graph-based circuit extraction on a billion-parameter model.}}{5}{table.caption.10}\protected@file@percent }
+\newlabel{tab:1b}{{6}{5}{GNOmE on Qwen2.5-1.5B (1,543.7M parameters, 28 layers). First graph-based circuit extraction on a billion-parameter model}{table.caption.10}{}}
 \citation{anthropic2025}
-\@writefile{toc}{\contentsline {section}{\numberline {10}Convergent discovery with attribution graphs}{7}{section.10}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces \textbf  {Convergent Discovery Timeline.} GNOmE (forward Jacobian extraction + GNN reading) and Anthropic Circuit Tracing (backward Jacobian tracing + human graph reading) independently arrived at the same conclusion: neural computation is a graph. The convergence is methodological, not coincidental.}}{7}{figure.caption.12}\protected@file@percent }
-\newlabel{fig:convergent}{{4}{7}{\textbf {Convergent Discovery Timeline.} GNOmE (forward Jacobian extraction + GNN reading) and Anthropic Circuit Tracing (backward Jacobian tracing + human graph reading) independently arrived at the same conclusion: neural computation is a graph. The convergence is methodological, not coincidental}{figure.caption.12}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Method Comparison for Circuit Discovery.}}{7}{table.caption.13}\protected@file@percent }
-\newlabel{tab:comparison}{{8}{7}{Method Comparison for Circuit Discovery}{table.caption.13}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {11}Comparison with existing methods}{7}{section.11}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {12}Limitations}{7}{section.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}Ablation: graph structure matters}{6}{section.8}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Ablation Study. Removing graph edges drops correlation from 0.748 to 0.312.}}{6}{table.caption.11}\protected@file@percent }
+\newlabel{tab:ablation}{{7}{6}{Ablation Study. Removing graph edges drops correlation from 0.748 to 0.312}{table.caption.11}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {9}Convergent discovery with attribution graphs}{6}{section.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {10}Comparison with existing methods}{6}{section.10}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces \textbf  {Convergent Discovery.} GNOmE and Anthropic's Circuit Tracing independently arrived at the same conclusion: neural computation is a graph, and graph networks are the natural tool for reading it.}}{6}{figure.caption.12}\protected@file@percent }
+\newlabel{fig:convergent}{{4}{6}{\textbf {Convergent Discovery.} GNOmE and Anthropic's Circuit Tracing independently arrived at the same conclusion: neural computation is a graph, and graph networks are the natural tool for reading it}{figure.caption.12}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Method Comparison for Circuit Discovery.}}{6}{table.caption.13}\protected@file@percent }
+\newlabel{tab:comparison}{{8}{6}{Method Comparison for Circuit Discovery}{table.caption.13}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {11}Limitations}{6}{section.11}\protected@file@percent }
 \bibcite{anthropic2025}{1}
 \bibcite{wang2023}{2}
 \bibcite{conmy2023}{3}
@@ -92,9 +104,10 @@
 \bibcite{micheli2023}{20}
 \bibcite{stolfo2024}{21}
 \bibcite{banerjee2024}{22}
-\@writefile{toc}{\contentsline {section}{\numberline {13}Conclusion}{8}{section.13}\protected@file@percent }
 \bibcite{makelov2023}{23}
 \bibcite{chan2022}{24}
 \bibcite{dawid2024}{25}
 \bibcite{qwen2024}{26}
-\gdef \@abspage@last{9}
+\@writefile{toc}{\contentsline {section}{\numberline {12}Broader impact}{7}{section.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {13}Conclusion}{7}{section.13}\protected@file@percent }
+\gdef \@abspage@last{8}

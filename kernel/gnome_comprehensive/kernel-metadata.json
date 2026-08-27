@@ -1,0 +1,13 @@
+{
+  "id": "sehajrsingh/gnome-comprehensive",
+  "title": "gnome-comprehensive",
+  "code_file": "gnome_comprehensive.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": false,
+  "enable_internet": true,
+  "dataset_sources": [],
+  "competition_sources": [],
+  "kernel_sources": []
+}
